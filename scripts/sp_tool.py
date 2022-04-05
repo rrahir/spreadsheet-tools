@@ -8,6 +8,7 @@ import re
 import sys
 import pprint
 import subprocess
+from uuid import uuid4
 
 from docopt import docopt
 from datetime import date
@@ -160,6 +161,9 @@ def update(config: configparser.ConfigParser):
     old_prs = []
     new_prs = []
     existing_prs = get_existing_prs(config)
+    today = date.today()
+    d = f"{str(today.day).zfill(2)}{str(today.month).zfill(2)}"
+    h = str(uuid4())[:4]
     for [version, rel_path] in spreadsheet_odoo_versions.values():
         if version in existing_prs:
             print(f"Branch {version} already has a pending PR on odoo/enterprise. Skipping...")
@@ -167,9 +171,7 @@ def update(config: configparser.ConfigParser):
             continue
 
         full_path = os.path.join(ent_path, rel_path)
-        today = date.today()
-        d = f"{str(today.day).zfill(2)}{str(today.month).zfill(2)}"
-        o_branch = f"{version}-spreadsheet-{d}-BI"
+        o_branch = f"{version}-spreadsheet-{d}-{h}-BI"
         # checkout o-spreadsheet
         checkout(spreadsheet_path, version)
         reset(spreadsheet_path, version)
