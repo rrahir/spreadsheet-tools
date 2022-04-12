@@ -9,6 +9,7 @@ spreadsheet_odoo_versions = {
     "15.0": ["15.0", "documents_spreadsheet/static/src/js/o_spreadsheet/o_spreadsheet.js"],
     "saas-15.1": ["saas-15.1", "documents_spreadsheet_bundle/static/src/o_spreadsheet/o_spreadsheet.js"],
     "saas-15.2": ["saas-15.2", "documents_spreadsheet_bundle/static/src/o_spreadsheet/o_spreadsheet.js"],
+    "saas-15.3": ["saas-15.3", "documents_spreadsheet_bundle/static/src/o_spreadsheet/o_spreadsheet.js"],
     "master": ["master", "documents_spreadsheet_bundle/static/src/o_spreadsheet/o_spreadsheet.js"]
 }
 
