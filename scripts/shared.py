@@ -10,7 +10,7 @@ spreadsheet_odoo_versions = {
     "saas-15.1": ["saas-15.1", "documents_spreadsheet_bundle/static/src/o_spreadsheet/o_spreadsheet.js"],
     "saas-15.2": ["saas-15.2", "documents_spreadsheet_bundle/static/src/o_spreadsheet/o_spreadsheet.js"],
     "saas-15.3": ["saas-15.3", "documents_spreadsheet_bundle/static/src/o_spreadsheet/o_spreadsheet.js"],
-    "master": ["master", "documents_spreadsheet_bundle/static/src/o_spreadsheet/o_spreadsheet.js"]
+    "master": ["master", "documents_spreadsheet/static/src/bundle/o_spreadsheet/o_spreadsheet.js"]
 }
 
 def get_spreadsheet_branch(config:configparser.ConfigParser) -> str:
