@@ -5,6 +5,7 @@ import configparser
 import json
 import os
 import re
+import shutil
 import sys
 import pprint
 import subprocess
@@ -29,7 +30,8 @@ def run_dist(config: configparser.ConfigParser):
     with pushd(config["spreadsheet"]["repo_path"]):
         print("Compiling dist...")
         try:
-            subprocess.check_output(["rm", "-r", "dist"])
+            # cleans previous dist
+            shutil.rmtree("dist")
             subprocess.check_output(["npm", "run", "dist"])
         except Exception as e:
             pp.pprint(e.cmd)
@@ -39,11 +41,12 @@ def run_dist(config: configparser.ConfigParser):
 
 
 def copy_dist(config: configparser.ConfigParser, destination_path: str):
-    with pushd(config["spreadsheet"]["repo_path"]):
+    with pushd(os.path.join(config["spreadsheet"]["repo_path"], "dist")):
         print("Copying dist...")
-        dist_path = os.path.join(
-            config["spreadsheet"]["repo_path"], 'dist', 'o_spreadsheet.js')
-        subprocess.check_output(['cp', dist_path, destination_path])
+        # find files
+        # TODO convert to shutils.copy
+        subprocess.check_output(['cp', 'o_spreadsheet.js', destination_path])
+        subprocess.check_output(['cp', 'o_spreadsheet.xml', destination_path])
 
 
 def checkout(exec_path, branch, force=False):
@@ -180,7 +183,9 @@ def update(config: configparser.ConfigParser):
         reset(ent_path, version)
         # build commit message - build/cp dist - push on remote
         with pushd(ent_path):
-            lines = subprocess.check_output(["tail", "-10", full_path]).decode("utf-8").split("\n")
+            full_file_path = os.path.join(full_path, 'o_spreadsheet.js')
+            # TODO export in function to support cross platform
+            lines = subprocess.check_output(["tail", "-10", full_file_path]).decode("utf-8").split("\n")
             hash = [line for line in lines if "hash" in line][0][-9:-2]
             message = commit_message(spreadsheet_path, hash, version, rel_path, version)
             if not message:
@@ -196,8 +201,8 @@ def update(config: configparser.ConfigParser):
             subprocess.check_output(cmd)
 
         # make Pr
-        url = make_PR(ent_path, version)
-        new_prs.append([version, url])
+        # url = make_PR(ent_path, version)
+        # new_prs.append([version, url])
 
     # print All PR's, split between new and old
     if old_prs:

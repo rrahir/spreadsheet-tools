@@ -39,6 +39,7 @@ def guess_spreadsheet_repo() -> str:
     return repos.get(answer, answer)
 
 def guess_enterprise_repo() -> str:
+    # TODO support cross platform
     print("looking for Odoo Enterprise repository...")
     try:
         cmd = ['find', USER_HOME, '-type', 'd',
