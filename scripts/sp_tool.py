@@ -201,8 +201,8 @@ def update(config: configparser.ConfigParser):
             subprocess.check_output(cmd)
 
         # make Pr
-        # url = make_PR(ent_path, version)
-        # new_prs.append([version, url])
+        url = make_PR(ent_path, version)
+        new_prs.append([version, url])
 
     # print All PR's, split between new and old
     if old_prs:
