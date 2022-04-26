@@ -65,6 +65,9 @@ def checkout(exec_path, branch, force=False):
             VERBOSE and print("Branch not found.\nCreating new local branch...")
             VERBOSE and print(f"Checkout base branch {version}")
             subprocess.check_output(['git', 'checkout', version])
+            # resets base on remote commit
+            subprocess.check_output(['git', 'pull'])
+            VERBOSE and print(f"Create branch {branch}")
             subprocess.check_output(['git', 'checkout', '-b', branch])
 
 
