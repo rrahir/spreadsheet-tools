@@ -31,7 +31,8 @@ def run_dist(config: configparser.ConfigParser):
         print("Compiling dist...")
         try:
             # cleans previous dist
-            shutil.rmtree("dist")
+            if os.path.isdir("dist"):
+                shutil.rmtree("dist")
             subprocess.check_output(["npm", "run", "dist"])
         except Exception as e:
             pp.pprint(e.cmd)
@@ -45,8 +46,9 @@ def copy_dist(config: configparser.ConfigParser, destination_path: str):
         print("Copying dist...")
         # find files
         # TODO convert to shutils.copy
-        subprocess.check_output(['cp', 'o_spreadsheet.js', destination_path])
-        subprocess.check_output(['cp', 'o_spreadsheet.xml', destination_path])
+        for file in ['o_spreadsheet.js', 'o_spreadsheet.xml']:
+            if os.path.isfile(file):
+                shutil.copy(file, destination_path)
 
 
 def checkout(exec_path, branch, force=False):
