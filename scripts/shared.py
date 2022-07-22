@@ -7,7 +7,6 @@ from utils import pushd
 spreadsheet_odoo_versions = {
     "14.0": ["14.0", "documents_spreadsheet/static/src/js/o-spreadsheet/"],
     "15.0": ["15.0", "documents_spreadsheet/static/src/js/o_spreadsheet/"],
-    "saas-15.1": ["saas-15.1", "documents_spreadsheet_bundle/static/src/o_spreadsheet/"],
     "saas-15.2": ["saas-15.2", "documents_spreadsheet_bundle/static/src/o_spreadsheet/"],
     "saas-15.3": ["saas-15.3", "documents_spreadsheet_bundle/static/src/o_spreadsheet/"],
     "saas-15.4": ["saas-15.4", "documents_spreadsheet/static/src/bundle/o_spreadsheet/"],
