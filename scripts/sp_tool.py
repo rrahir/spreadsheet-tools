@@ -128,12 +128,14 @@ def commit_message(path, old, new, rel_path, version="master"):
         diff_file_paths = (
             subprocess.check_output(cmd).decode("utf-8").split("\n")
         )
-        any(
+        diff_files = any(
             [
                 any([file_path.startswith(path) for path in DIFF_VALID_PATH])
                 for file_path in diff_file_paths
             ]
         )
+        if not diff_files:
+            return ""
         cmd = [
             "git",
             "log",
