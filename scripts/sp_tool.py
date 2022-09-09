@@ -19,6 +19,7 @@ from shared import (
     get_spreadsheet_branch,
     spreadsheet_odoo_versions,
     get_version_info,
+    REPOS
 )
 
 from utils import pushd
@@ -51,7 +52,6 @@ def copy_dist(config: configparser.ConfigParser, destination_path: str):
     with pushd(os.path.join(config["spreadsheet"]["repo_path"], "dist")):
         print("Copying dist...")
         # find files
-        # TODO convert to shutils.copy
         for file in ["o_spreadsheet.js", "o_spreadsheet.xml"]:
             if os.path.isfile(file):
                 shutil.copy(file, destination_path)
@@ -75,11 +75,12 @@ def checkout(exec_path, branch, force=False):
                     )
             subprocess.check_output(["git", "checkout", branch])
         except subprocess.CalledProcessError as e:
-            [version, _] = get_version_info(branch)
+            [_, version, _] = get_version_info(branch)
             VERBOSE and print("Branch not found.\nCreating new local branch...")
             VERBOSE and print(f"Checkout base branch {version}")
             subprocess.check_output(["git", "checkout", version])
             # resets base on remote commit
+            # TODORAR smarter fetch. checkout should work with config, not an exec path, imho
             subprocess.check_output(["git", "pull"])
             VERBOSE and print(f"Create branch {branch}")
             subprocess.check_output(["git", "checkout", "-b", branch])
@@ -154,7 +155,6 @@ def commit_message(path, old, new, rel_path, version="master"):
 def push(config: configparser.ConfigParser, local=False):
     print("\n=== PUSH ===\n")
     spreadsheet_path = config["spreadsheet"]["repo_path"]
-    ent_path = config["enterprise"]["repo_path"]
 
     with pushd(spreadsheet_path):
         # TODORAR check that head is up-to-date w/ remote as well
@@ -163,11 +163,14 @@ def push(config: configparser.ConfigParser, local=False):
                 "You have unstaged changes, do you wish to continue without commiting them ? [y/n] : "
             )
             if val.lower() not in ["y", "yes"]:
+                print('Exiting the script...')
                 exit(1)
     spreadsheet_branch = get_spreadsheet_branch(config)
-    [version, rel_path] = get_version_info(spreadsheet_branch)
+    [repo, version, rel_path] = get_version_info(spreadsheet_branch)
     o_branch = f"{version}-spreadsheet{spreadsheet_branch.split(version)[-1]}"
-    full_path = os.path.join(ent_path, rel_path)
+    repo_path = config[repo]["repo_path"]
+
+    full_path = os.path.join(repo_path, rel_path)
     message = commit_message(
         spreadsheet_path, version, spreadsheet_branch, rel_path, version
     )
@@ -175,17 +178,17 @@ def push(config: configparser.ConfigParser, local=False):
         sys.exit(
             f"The branch ${spreadsheet_branch} does not contain any new commits."
         )
-    checkout(ent_path, o_branch)
+    checkout(repo_path, o_branch)
     run_dist(config)
     copy_dist(config, full_path)
-    with pushd(ent_path):
+    with pushd(repo_path):
         subprocess.check_output(["git", "commit", "-am", message])
         if not local:
             cmd = [
                 "git",
                 "push",
                 "-u",
-                config["enterprise"]["remote-dev"],
+                config[repo]["remote-dev"],
                 o_branch,
             ]
             subprocess.check_output(cmd)
@@ -205,25 +208,26 @@ def list_pr(config: configparser.ConfigParser):
 
 
 def get_existing_prs(config: configparser.ConfigParser):
-    ent_path = config["enterprise"]["repo_path"]
     prs = {}
-    with pushd(ent_path):
-        for version in spreadsheet_odoo_versions.keys():
-            existing_prs = subprocess.check_output(
-                [
-                    "gh",
-                    "pr",
-                    "list",
-                    "--search",
-                    f"base:{version} is:open update o_spreadsheet to latest version",
-                ]
-            )
-            if existing_prs:
-                url = (
-                    "https://github.com/odoo/enterprise/pull/%s"
-                    % existing_prs.decode("utf-8").split("\t")[0]
+    for repo in ["enterprise" ]:
+        path = config[repo]["repo_path"]
+        with pushd(path):
+            for version in spreadsheet_odoo_versions.keys():
+                existing_prs = subprocess.check_output(
+                    [
+                        "gh",
+                        "pr",
+                        "list",
+                        "--search",
+                        f"base:{version} is:open update o_spreadsheet to latest version",
+                    ]
                 )
-                prs[version] = url
+                if existing_prs:
+                    url = (
+                        "https://github.com/odoo/%s/pull/%s"
+                        % (repo, existing_prs.decode("utf-8").split("\t")[0])
+                    )
+                    prs[version] = url
     return prs
 
 
@@ -232,41 +236,49 @@ def update(config: configparser.ConfigParser):
     spreadsheet_path = config["spreadsheet"]["repo_path"]
     ent_path = config["enterprise"]["repo_path"]
     print("fetching o-spreadsheet ...")
+    # TODORAR smart fetch, only fetch the branches in spreadsheet_odoo_versions.keys()
+    #adapt to odoo behaviour +> factorize
+    versions = spreadsheet_odoo_versions.keys()
     with pushd(spreadsheet_path):
         subprocess.check_output(
-            ["git", "fetch", config["spreadsheet"]["remote"]]
+            ["git", "fetch", config["spreadsheet"]["remote"], " ".join(versions)]
         )
     print("fetching enterprise ...")
     with pushd(config["enterprise"]["repo_path"]):
         subprocess.check_output(
-            ["git", "fetch", config["enterprise"]["remote"]]
+            ["git", "fetch", config["enterprise"]["remote"],  " ".join(versions)]
         )
+    # print("fetching odoo ...")
+    # with pushd(config["odoo"]["repo_path"]):
+    #     subprocess.check_output(
+    #         ["git", "fetch", config["odoo"]["remote"],  " ".join(versions)]
+    #     )
     old_prs = []
     new_prs = []
     existing_prs = get_existing_prs(config)
     today = date.today()
     d = f"{str(today.day).zfill(2)}{str(today.month).zfill(2)}"
     h = str(uuid4())[:4]
-    for [version, rel_path] in spreadsheet_odoo_versions.values():
+    for [repo, version, rel_path] in spreadsheet_odoo_versions.values():
         if version in existing_prs:
             print(
                 f"Branch {version} already has a pending PR on odoo/enterprise. Skipping..."
             )
             old_prs.append([version, existing_prs[version]])
             continue
-
-        full_path = os.path.join(ent_path, rel_path)
+        repo_path = config[repo]["repo_path"]
+        full_path = os.path.join(repo_path, rel_path)
         o_branch = f"{version}-spreadsheet-{d}-{h}-BI"
         # checkout o-spreadsheet
         checkout(spreadsheet_path, version)
         reset(spreadsheet_path, version)
         # checkout enterprise on update branch
-        checkout(ent_path, version, force=True)
-        reset(ent_path, version)
+        checkout(repo_path, version, force=True)
+        reset(repo_path, version)
         # build commit message - build/cp dist - push on remote
-        with pushd(ent_path):
+        with pushd(repo_path):
             full_file_path = os.path.join(full_path, "o_spreadsheet.js")
-            # TODO export in function to support cross platform
+            # TODORAR export in function to support cross platform
             lines = (
                 subprocess.check_output(["tail", "-10", full_file_path])
                 .decode("utf-8")
@@ -278,10 +290,10 @@ def update(config: configparser.ConfigParser):
             )
             if not message:
                 print(
-                    f"Branch {version} is up-to-date on odoo/enterprise. Skipping..."
+                    f"Branch {version} is up-to-date on odoo/{repo}. Skipping..."
                 )
                 continue
-            checkout(ent_path, o_branch)
+            checkout(repo_path, o_branch)
             # build & cp dist
             run_dist(config)
             copy_dist(config, full_path)
@@ -291,7 +303,7 @@ def update(config: configparser.ConfigParser):
                 "git",
                 "push",
                 "-u",
-                config["enterprise"]["remote-dev"],
+                config[repo]["remote-dev"],
                 o_branch,
             ]
             subprocess.check_output(cmd)

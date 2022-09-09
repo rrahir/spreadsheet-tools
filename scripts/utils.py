@@ -38,6 +38,27 @@ def guess_spreadsheet_repo() -> str:
     answer = input("\nyour repo path: ")
     return repos.get(answer, answer)
 
+def guess_odoo_repo() -> str:
+    # TODO support cross platform
+    print("looking for Odoo Community repository...")
+    try:
+        cmd = ['find', USER_HOME, '-type', 'f',
+               '-iname', 'odoo-bin']
+        result = subprocess.check_output(cmd).decode("utf-8").split("\n")[:-1]
+        result = [re.sub('\/odoo-bin$', "", r) for r in result]
+    except Exception:
+        result = []
+
+    repos = {
+        str(index+1): proposition for (index, proposition)
+        in enumerate(result)
+    }
+    repos_guess = "\n".join(["%s: %s" % (i, p) for [i, p] in repos.items()])
+    print(f"\nsuggested repo path: \n{repos_guess}")
+    answer = input("\nyour repo path: ")
+    return repos.get(answer, answer)
+
+
 def guess_enterprise_repo() -> str:
     # TODO support cross platform
     print("looking for Odoo Enterprise repository...")
@@ -58,21 +79,6 @@ def guess_enterprise_repo() -> str:
     answer = input("\nyour repo path: ")
     return repos.get(answer, answer)
 
-
-# def get_remote_old(repo_path) -> str:
-#     with pushd(repo_path):
-#         cmd = ['git', 'remote']
-#         values = subprocess.check_output(
-#             cmd).decode("utf-8").split("\n")[:-1]
-#         remotes = {
-#             str(index+1): proposition for
-#             (index, proposition) in enumerate(values)
-#         }
-#         remotes_guess = "\n".join(["%s: %s" % (i, p)
-#                                    for [i, p] in remotes.items()])
-#         print(f"\nChoose a remote: \n{remotes_guess}")
-#         answer = input("enter an index: ")
-#         return remotes.get(answer, answer)
 
 def get_remote(exec_path, remote_addr) -> str:
     with pushd(exec_path):
