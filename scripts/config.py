@@ -3,10 +3,10 @@ import re
 import configparser
 import subprocess
 from const import CONFIG_FILE_PATH
-from utils import guess_enterprise_repo, guess_spreadsheet_repo, get_remote
+from utils import guess_enterprise_repo, guess_spreadsheet_repo, guess_odoo_repo, get_remote
 from shutil import which
 
-CONFIG_KEYS = ['enterprise', 'spreadsheet']
+CONFIG_KEYS = ["enterprise", "spreadsheet", "odoo"]
 
 
 def get_config() -> configparser.ConfigParser:
@@ -37,16 +37,28 @@ def create_config() -> configparser.ConfigParser:
     print("\n*** Configuring spreadsheet repository ***")
     print("------------------------------------------")
     spreadhseet_repo_path = guess_spreadsheet_repo()
-    config['spreadsheet'] = {"repo_path": spreadhseet_repo_path,
-                               "remote": get_remote(spreadhseet_repo_path, 'odoo/o-spreadsheet')}
+    config['spreadsheet'] = {
+        "repo_path": spreadhseet_repo_path,
+        "remote": get_remote(spreadhseet_repo_path, 'odoo/o-spreadsheet')
+    }
+
+    print("\n*** Configuring odoo repository ***")
+    print("-----------------------------------------")
+    odoo_repo_path = guess_odoo_repo()
+    config['odoo'] = {
+        "repo_path": odoo_repo_path,
+        "remote-dev": get_remote(odoo_repo_path, 'odoo-dev/odoo'),
+        "remote": get_remote(odoo_repo_path, 'odoo/odoo'),
+    }
 
     print("\n*** Configuring enterprise repository ***")
     print("-----------------------------------------")
     ent_repo_path = guess_enterprise_repo()
-    config['enterprise'] = {"repo_path": ent_repo_path,
-                            "remote-dev": get_remote(ent_repo_path, 'odoo-dev/enterprise'),
-                            "remote": get_remote(ent_repo_path, 'odoo/enterprise'),
-                            }
+    config['enterprise'] = {
+        "repo_path": ent_repo_path,
+        "remote-dev": get_remote(ent_repo_path, 'odoo-dev/enterprise'),
+        "remote": get_remote(ent_repo_path, 'odoo/enterprise'),
+    }
 
     with open(CONFIG_FILE_PATH, 'w') as configfile:    # save
         config.write(configfile)
