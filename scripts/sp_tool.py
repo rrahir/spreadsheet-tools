@@ -19,7 +19,7 @@ from shared import (
     get_spreadsheet_branch,
     spreadsheet_odoo_versions,
     get_version_info,
-    REPOS
+    REPOS,
 )
 
 from utils import pushd
@@ -163,7 +163,7 @@ def push(config: configparser.ConfigParser, local=False):
                 "You have unstaged changes, do you wish to continue without commiting them ? [y/n] : "
             )
             if val.lower() not in ["y", "yes"]:
-                print('Exiting the script...')
+                print("Exiting the script...")
                 exit(1)
     spreadsheet_branch = get_spreadsheet_branch(config)
     [repo, version, rel_path] = get_version_info(spreadsheet_branch)
@@ -209,7 +209,7 @@ def list_pr(config: configparser.ConfigParser):
 
 def get_existing_prs(config: configparser.ConfigParser):
     prs = {}
-    for repo in ["enterprise" ]:
+    for repo in ["enterprise"]:
         path = config[repo]["repo_path"]
         with pushd(path):
             for version in spreadsheet_odoo_versions.keys():
@@ -223,9 +223,9 @@ def get_existing_prs(config: configparser.ConfigParser):
                     ]
                 )
                 if existing_prs:
-                    url = (
-                        "https://github.com/odoo/%s/pull/%s"
-                        % (repo, existing_prs.decode("utf-8").split("\t")[0])
+                    url = "https://github.com/odoo/%s/pull/%s" % (
+                        repo,
+                        existing_prs.decode("utf-8").split("\t")[0],
                     )
                     prs[version] = url
     return prs
@@ -237,22 +237,27 @@ def update(config: configparser.ConfigParser):
     ent_path = config["enterprise"]["repo_path"]
     print("fetching o-spreadsheet ...")
     # TODORAR smart fetch, only fetch the branches in spreadsheet_odoo_versions.keys()
-    #adapt to odoo behaviour +> factorize
+    # adapt to odoo behaviour +> factorize
     versions = spreadsheet_odoo_versions.keys()
     with pushd(spreadsheet_path):
         subprocess.check_output(
-            ["git", "fetch", config["spreadsheet"]["remote"], " ".join(versions)]
+            [
+                "git",
+                "fetch",
+                config["spreadsheet"]["remote"],
+                " ".join(versions),
+            ]
         )
     print("fetching enterprise ...")
     with pushd(config["enterprise"]["repo_path"]):
         subprocess.check_output(
-            ["git", "fetch", config["enterprise"]["remote"],  " ".join(versions)]
+            ["git", "fetch", config["enterprise"]["remote"], " ".join(versions)]
         )
-    # print("fetching odoo ...")
-    # with pushd(config["odoo"]["repo_path"]):
-    #     subprocess.check_output(
-    #         ["git", "fetch", config["odoo"]["remote"],  " ".join(versions)]
-    #     )
+    print("fetching odoo ...")
+    with pushd(config["odoo"]["repo_path"]):
+        subprocess.check_output(
+            ["git", "fetch", config["odoo"]["remote"], " ".join(versions)]
+        )
     old_prs = []
     new_prs = []
     existing_prs = get_existing_prs(config)
