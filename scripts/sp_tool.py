@@ -193,6 +193,20 @@ def push(config: configparser.ConfigParser, local=False):
             ]
             subprocess.check_output(cmd)
 
+    if repo == "odoo" and not local:
+        # create an enterprise branch on remote for runbot builds
+        ent_path = config["enterprise"]["repo_path"]
+        with pushd(ent_path):
+            checkout(ent_path, o_branch)
+            cmd = [
+                "git",
+                "push",
+                "-u",
+                config["enterprise"]["remote-dev"],
+                o_branch,
+            ]
+            subprocess.check_output(cmd)
+
 
 def list_pr(config: configparser.ConfigParser):
     PRs = get_existing_prs(config)
@@ -312,6 +326,20 @@ def update(config: configparser.ConfigParser):
                 o_branch,
             ]
             subprocess.check_output(cmd)
+
+        if repo == "odoo":
+            # create an enterprise branch for runbot builds
+            ent_path = config["enterprise"]["repo_path"]
+            with pushd(ent_path):
+                checkout(ent_path, o_branch)
+                cmd = [
+                    "git",
+                    "push",
+                    "-u",
+                    config["enterprise"]["remote-dev"],
+                    o_branch,
+                ]
+                subprocess.check_output(cmd)
 
         # make Pr
         url = make_PR(ent_path, version)
