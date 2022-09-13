@@ -252,25 +252,24 @@ def update(config: configparser.ConfigParser):
     print("fetching o-spreadsheet ...")
     # TODORAR smart fetch, only fetch the branches in spreadsheet_odoo_versions.keys()
     # adapt to odoo behaviour +> factorize
-    versions = spreadsheet_odoo_versions.keys()
+    versions = [k for k in spreadsheet_odoo_versions.keys()]
     with pushd(spreadsheet_path):
         subprocess.check_output(
             [
                 "git",
                 "fetch",
                 config["spreadsheet"]["remote"],
-                " ".join(versions),
-            ]
+            ] + versions
         )
     print("fetching enterprise ...")
     with pushd(config["enterprise"]["repo_path"]):
         subprocess.check_output(
-            ["git", "fetch", config["enterprise"]["remote"], " ".join(versions)]
+            ["git", "fetch", config["enterprise"]["remote"]] + versions
         )
     print("fetching odoo ...")
     with pushd(config["odoo"]["repo_path"]):
         subprocess.check_output(
-            ["git", "fetch", config["odoo"]["remote"], " ".join(versions)]
+            ["git", "fetch", config["odoo"]["remote"]] + versions
         )
     old_prs = []
     new_prs = []
@@ -342,7 +341,7 @@ def update(config: configparser.ConfigParser):
                 subprocess.check_output(cmd)
 
         # make Pr
-        url = make_PR(ent_path, version)
+        url = make_PR(repo_path, version)
         new_prs.append([version, url])
 
     # print All PR's, split between new and old
