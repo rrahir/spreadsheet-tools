@@ -25,6 +25,7 @@ spreadsheet_odoo_versions = {
         "saas-15.3",
         "documents_spreadsheet_bundle/static/src/o_spreadsheet/",
     ],
+    "16.0": ["odoo", "master", "addons/spreadsheet/static/src/o_spreadsheet/"],
     "master": ["odoo", "master", "addons/spreadsheet/static/src/o_spreadsheet/"],
 }
 
