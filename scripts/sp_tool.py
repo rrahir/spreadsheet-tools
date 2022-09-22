@@ -146,8 +146,10 @@ def commit_message(path, old, new, rel_path, version="master"):
         commits = subprocess.check_output(cmd).decode("utf-8")
         if not commits:
             return ""
+        spitted_path = rel_path.split("/")
+        addon_name = spitted_path[1] if spitted_path[0] == "addons" else spitted_path[0]
         title = "{} {}: update o_spreadsheet to latest version".format(
-            version == "master" and "[IMP]" or "[FIX]", rel_path.split("/")[0]
+            version == "master" and "[IMP]" or "[FIX]", addon_name
         )
         return f"{title}\n\n### Contains the following commits:\n\n{commits}"
 
