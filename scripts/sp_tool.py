@@ -48,13 +48,15 @@ def run_dist(config: configparser.ConfigParser):
             exit(1)
 
 
-def copy_dist(config: configparser.ConfigParser, destination_path: str):
+def copy_dist(config: configparser.ConfigParser, destination_path: str, types_path: str or None):
     with pushd(os.path.join(config["spreadsheet"]["repo_path"], "dist")):
         print("Copying dist...")
         # find files
         for file in ["o_spreadsheet.js", "o_spreadsheet.xml"]:
             if os.path.isfile(file):
                 shutil.copy(file, destination_path)
+        if types_path and os.path.isfile("o_spreadsheet.d.ts"):
+            shutil.copy("o_spreadsheet.d.ts", types_path)
 
 
 def checkout(exec_path, branch, force=False):
@@ -76,7 +78,8 @@ def checkout(exec_path, branch, force=False):
             subprocess.check_output(["git", "checkout", branch])
         except subprocess.CalledProcessError as e:
             [_, version, _] = get_version_info(branch)
-            VERBOSE and print("Branch not found.\nCreating new local branch...")
+            VERBOSE and print(
+                "Branch not found.\nCreating new local branch...")
             VERBOSE and print(f"Checkout base branch {version}")
             subprocess.check_output(["git", "checkout", version])
             # resets base on remote commit
@@ -168,7 +171,8 @@ def push(config: configparser.ConfigParser, local=False):
                 print("Exiting the script...")
                 exit(1)
     spreadsheet_branch = get_spreadsheet_branch(config)
-    [repo, version, rel_path] = get_version_info(spreadsheet_branch)
+    [repo, version, rel_path, types_path] = get_version_info(
+        spreadsheet_branch)
     o_branch = f"{version}-spreadsheet{spreadsheet_branch.split(version)[-1]}"
     repo_path = config[repo]["repo_path"]
 
@@ -182,7 +186,7 @@ def push(config: configparser.ConfigParser, local=False):
         )
     checkout(repo_path, o_branch)
     run_dist(config)
-    copy_dist(config, full_path)
+    copy_dist(config, full_path, types_path)
     with pushd(repo_path):
         subprocess.check_output(["git", "commit", "-am", message])
         if not local:
