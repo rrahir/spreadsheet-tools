@@ -343,7 +343,7 @@ def update(config: configparser.ConfigParser):
                 subprocess.check_output(cmd)
 
         # make Pr
-        url = make_PR(repo_path, version)
+        [_, url] = make_PR(repo_path, version)
         new_prs.append([version, url])
 
     # print All PR's, split between new and old
