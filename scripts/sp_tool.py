@@ -225,7 +225,7 @@ def list_pr(config: configparser.ConfigParser):
 
 def get_existing_prs(config: configparser.ConfigParser):
     prs = {}
-    for repo in ["enterprise"]:
+    for repo in ["enterprise", "odoo"]:
         path = config[repo]["repo_path"]
         with pushd(path):
             for version in spreadsheet_odoo_versions.keys():
