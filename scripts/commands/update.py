@@ -4,7 +4,7 @@ import os
 from datetime import date
 from uuid import uuid4
 from shared import spreadsheet_odoo_versions
-from utils import pushd
+from utils import pushd, get_o_spreadsheet_hash
 from helpers import (
     get_existing_prs,
     checkout,
@@ -20,10 +20,9 @@ def update(config: configparser.ConfigParser):
     print("\n=== UPDATE ===\nThis may take a while ;-)\n")
     spreadsheet_path = config["spreadsheet"]["repo_path"]
     ent_path = config["enterprise"]["repo_path"]
-    print("fetching o-spreadsheet ...")
-    # TODORAR smart fetch, only fetch the branches in spreadsheet_odoo_versions.keys()
-    # adapt to odoo behaviour +> factorize
     versions = [k for k in spreadsheet_odoo_versions.keys()]
+
+    print("fetching o-spreadsheet ...")
     with pushd(spreadsheet_path):
         subprocess.check_output(
             [
@@ -50,31 +49,29 @@ def update(config: configparser.ConfigParser):
     d = f"{str(today.day).zfill(2)}{str(today.month).zfill(2)}"
     h = str(uuid4())[:4]
     for [repo, version, rel_path] in spreadsheet_odoo_versions.values():
+        text = f"Processing version {version}"
+        print(text)
+        print("=" * len(text))
         if version in existing_prs:
             print(
-                f"Branch {version} already has a pending PR on odoo/enterprise. Skipping..."
+                f"Branch {version} already has a pending PR on odoo/{repo}. Skipping..."
             )
             old_prs.append([version, existing_prs[version]])
             continue
+
         repo_path = config[repo]["repo_path"]
         full_path = os.path.join(repo_path, rel_path)
         o_branch = f"{version}-spreadsheet-{d}-{h}-BI"
         # checkout o-spreadsheet
         checkout(spreadsheet_path, version)
         reset(spreadsheet_path, version)
-        # checkout enterprise on update branch
+        # checkout Odoo  on update branch
         checkout(repo_path, version, force=True)
         reset(repo_path, version)
         # build commit message - build/cp dist - push on remote
         with pushd(repo_path):
             full_file_path = os.path.join(full_path, "o_spreadsheet.js")
-            # TODORAR export in function to support cross platform
-            lines = (
-                subprocess.check_output(["tail", "-10", full_file_path])
-                .decode("utf-8")
-                .split("\n")
-            )
-            hash = [line for line in lines if "hash" in line][0][-9:-2]
+            hash = get_o_spreadsheet_hash(full_file_path)
             message = commit_message(
                 spreadsheet_path, hash, version, rel_path, version
             )
@@ -113,7 +110,7 @@ def update(config: configparser.ConfigParser):
                 subprocess.check_output(cmd)
 
         # make Pr
-        [_, url] = make_PR(repo_path, version)
+        url = make_PR(repo_path, version)
         new_prs.append([version, url])
 
     # print All PR's, split between new and old
