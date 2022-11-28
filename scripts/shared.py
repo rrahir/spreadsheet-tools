@@ -7,14 +7,17 @@ VERBOSE = True
 
 
 def set_verbose(verbose: bool):
+    global VERBOSE
     VERBOSE = verbose
 
 
 def get_verbose() -> bool:
+    global VERBOSE
     return VERBOSE
 
 
 # { branch prefix (stable release): [version, filepath in enterprise]}
+# TODO: find another way to get the version to ordinate them
 spreadsheet_odoo_versions = {
     "14.0": [
         "enterprise",
