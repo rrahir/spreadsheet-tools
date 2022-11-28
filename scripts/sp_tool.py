@@ -113,6 +113,7 @@ def make_PR(path, version, stop=True):
             ["gh", "pr", "create", "--fill", "--base", version]
         )
         age = "new"
+        # TODO: make retry step
         result = subprocess.check_output(["gh", "pr", "view", "--json", "url"])
         url = json.loads(result.decode("utf-8"))["url"]
 
@@ -373,6 +374,7 @@ def main():
 
     """
     arguments = docopt(main.__doc__, version="0.0.1@alpha")
+    from versions import versions
     from config import config
 
     if arguments["-s"]:
