@@ -2,7 +2,9 @@ import contextlib
 import os
 import re
 import subprocess
+import time
 
+from typing import List
 from const import USER_HOME
 
 # See https://stackoverflow.com/questions/6194499/pushd-through-os-system
@@ -102,3 +104,33 @@ def get_remote(exec_path, remote_addr) -> str:
 
         remote = [remote for remote in remotes if remote_addr in remote][0]
         return remote.split()[0]
+
+
+def find_file() -> str:
+    """cross platform find"""
+    return ""
+
+
+def get_o_spreadsheet_hash(path) -> str:
+    # TORORAR make it crossplatform
+    lines = (
+        subprocess.check_output(["tail", "-10", path])
+        .decode("utf-8")
+        .split("\n")
+    )
+    return [line for line in lines if "hash" in line][0][-9:-2]
+
+
+def retry_cmd(cmd_args: List[str], nbr_retry: int):
+    for i in range(nbr_retry):
+        try:
+            result = subprocess.check_output(cmd_args)
+        except subprocess.CalledProcessError as e:
+            if i < nbr_retry - 1:
+                print(f"call #{i+1} failed. Retrying ...")
+                time.sleep(0.5)
+                continue
+            else:
+                raise e
+        break
+    return result

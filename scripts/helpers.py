@@ -8,7 +8,7 @@ import json
 
 from shared import spreadsheet_odoo_versions
 from const import DIFF_VALID_PATH
-from utils import pushd
+from utils import pushd, retry_cmd
 from shared import get_version_info, get_verbose
 
 
@@ -79,11 +79,11 @@ def get_existing_prs(config: configparser.ConfigParser):
                         "--search",
                         f"base:{version} is:open update o_spreadsheet to latest version",
                     ]
-                )
+                ).decode("utf-8")
                 if existing_prs:
                     url = "https://github.com/odoo/%s/pull/%s" % (
                         repo,
-                        existing_prs.decode("utf-8").split("\t")[0],
+                        existing_prs.split("\t")[0],
                     )
                     prs[version] = url
     return prs
@@ -148,19 +148,17 @@ def copy_dist(config: configparser.ConfigParser, destination_path: str):
                 shutil.copy(file, destination_path)
 
 
-def make_PR(path, version, stop=True):
+def make_PR(path, version, stop=True) -> str:
     print("making PR", version, path)
     with pushd(path):
-        result = subprocess.check_output(
+        subprocess.check_output(
             ["gh", "pr", "create", "--fill", "--base", version]
         )
-        age = "new"
-        # TODO: make retry step
-        result = subprocess.check_output(["gh", "pr", "view", "--json", "url"])
+        result = retry_cmd(["gh", "pr", "view", "--json", "url"], 3)
         url = json.loads(result.decode("utf-8"))["url"]
 
         if stop:
-            subprocess.check_output(
-                ["gh", "pr", "comment", url, "--body", "fw-bot ignore"]
+            retry_cmd(
+                ["gh", "pr", "comment", url, "--body", "fw-bot ignore"], 3
             )
-        return [age, url]
+        return url
