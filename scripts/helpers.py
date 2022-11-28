@@ -65,7 +65,7 @@ def reset(exec_path, branch):
         subprocess.check_output(["git", "reset", "--hard", remote_branch])
 
 
-def get_existing_prs(config: configparser.ConfigParser):
+def get_odoo_prs(config: configparser.ConfigParser):
     prs = {}
     for repo in ["enterprise", "odoo"]:
         path = config[repo]["repo_path"]
@@ -89,7 +89,30 @@ def get_existing_prs(config: configparser.ConfigParser):
     return prs
 
 
-def commit_message(path, old, new, rel_path, version="master"):
+def get_o_spreadsheet_release_prs(config: configparser.ConfigParser):
+    prs = {}
+    path = config["spreadsheet"]["repo_path"]
+    with pushd(path):
+        for version in spreadsheet_odoo_versions.keys():
+            existing_prs = subprocess.check_output(
+                [
+                    "gh",
+                    "pr",
+                    "list",
+                    "--search",
+                    f"base:{version} is:open [REL]in:title",
+                ]
+            ).decode("utf-8")
+            if existing_prs:
+                url = "https://github.com/odoo/%s/pull/%s" % (
+                    "o-spreadsheet",
+                    existing_prs.split("\t")[0],
+                )
+                prs[version] = url
+    return prs
+
+
+def get_commits(path, old, new):
     with pushd(path):
         cmd = ["git", "diff", "--name-only", old, new]
         diff_file_paths = (
@@ -112,14 +135,20 @@ def commit_message(path, old, new, rel_path, version="master"):
         commits = subprocess.check_output(cmd).decode("utf-8")
         if not commits:
             return ""
-        spitted_path = rel_path.split("/")
-        addon_name = (
-            spitted_path[1] if spitted_path[0] == "addons" else spitted_path[0]
-        )
-        title = "{} {}: update o_spreadsheet to latest version".format(
-            version == "master" and "[IMP]" or "[FIX]", addon_name
-        )
-        return f"{title}\n\n### Contains the following commits:\n\n{commits}"
+        return f"\n\n### Contains the following commits:\n\n{commits}"
+
+def spreadsheet_release_title(tag):
+    return f"[REL] {tag}"
+
+def odoo_commit_title(rel_path, version="master"):
+    spitted_path = rel_path.split("/")
+    addon_name = (
+        spitted_path[1] if spitted_path[0] == "addons" else spitted_path[0]
+    )
+    title = "{} {}: update o_spreadsheet to latest version".format(
+        version == "master" and "[IMP]" or "[FIX]", addon_name
+    )
+    return title
 
 
 def run_dist(config: configparser.ConfigParser):
@@ -139,7 +168,24 @@ def run_dist(config: configparser.ConfigParser):
             exit(1)
 
 
-def copy_dist(config: configparser.ConfigParser, destination_path: str):
+def run_build(config: configparser.ConfigParser):
+    with pushd(config["spreadsheet"]["repo_path"]):
+        print("Compiling build...")
+        try:
+            # cleans previous dist
+            if os.path.isdir("build"):
+                shutil.rmtree("build")
+            subprocess.check_output(["npm", "run", "build"])
+        except Exception as e:
+            pp.pprint(e.cmd)
+            pp.pprint(e.returncode)
+            print(
+                "You might be running a bad version of npm packages. Please run 'npm install' and retry :)"
+            )
+            exit(1)
+
+
+def copy_build(config: configparser.ConfigParser, destination_path: str):
     with pushd(os.path.join(config["spreadsheet"]["repo_path"], "dist")):
         print("Copying dist...")
         # find files
@@ -162,3 +208,29 @@ def make_PR(path, version, stop=True) -> str:
                 ["gh", "pr", "comment", url, "--body", "fw-bot ignore"], 3
             )
         return url
+
+
+def fetch_repositories(config):
+    spreadsheet_path = config["spreadsheet"]["repo_path"]
+    versions = [k for k in spreadsheet_odoo_versions.keys()]
+
+    print("fetching o-spreadsheet ...")
+    with pushd(spreadsheet_path):
+        subprocess.check_output(
+            [
+                "git",
+                "fetch",
+                config["spreadsheet"]["remote"],
+            ]
+            + versions
+        )
+    print("fetching enterprise ...")
+    with pushd(config["enterprise"]["repo_path"]):
+        subprocess.check_output(
+            ["git", "fetch", config["enterprise"]["remote"]] + versions
+        )
+    print("fetching odoo ...")
+    with pushd(config["odoo"]["repo_path"]):
+        subprocess.check_output(
+            ["git", "fetch", config["odoo"]["remote"]] + versions
+        )

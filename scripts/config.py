@@ -70,6 +70,3 @@ def create_config() -> configparser.ConfigParser:
         config.write(configfile)
     print("Congratulations, you are now set up!\n\n")
     return config
-
-
-config = get_config()

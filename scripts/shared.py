@@ -7,10 +7,12 @@ VERBOSE = True
 
 
 def set_verbose(verbose: bool):
+    global VERBOSE
     VERBOSE = verbose
 
 
 def get_verbose() -> bool:
+    global VERBOSE
     return VERBOSE
 
 

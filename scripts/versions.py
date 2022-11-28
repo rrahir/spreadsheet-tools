@@ -1,5 +1,7 @@
 import subprocess
 import re
+import sys
+import platform
 
 
 def check_git_version():
@@ -12,13 +14,35 @@ def check_git_version():
     [major, minor, _] = git_version.split(".")
 
     if (int(major) * 10000 + int(minor)) < 20022:
-        raise Exception(
-            "This script runs on git version >= 2.22. Please update your git intall."
+        sys.exit(
+            "This script runs on git version >= 2.22."
+            "Please update your git install and/or consult https://github.com/rrahir/spreadsheet-tools#readme"
+        )
+
+
+def check_platform():
+    # tODORAR to test on windaube instances
+    # make it windows friendly and then remove this check
+    if platform.system() not in ["Darwwin", "Linux"]:
+        sys.exit(
+            "This script currently only works on unix-bases OS."
+            "Please run the script in WSL.and/or consult https://github.com/rrahir/spreadsheet-tools#readme"
+        )
+
+
+def check_python_version():
+    py_version = sys.version_info
+    if py_version.major == 3 and py_version.minor < 7 or py_version.major < 3:
+        sys.exit(
+            "THis script requires python 3.7+."
+            "Please consult https://github.com/rrahir/spreadsheet-tools#readme"
         )
 
 
 def check_versions():
+    check_platform()
     check_git_version()
+    check_python_version()
 
 
 versions = check_versions()

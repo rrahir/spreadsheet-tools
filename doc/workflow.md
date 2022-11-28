@@ -21,3 +21,6 @@ WHen a feature has a counterpart in [odoo/enterprise](https://github.com/odoo/en
 [1] This is required. Both to test your modifications and offer a test environment for the Product Owner
 [2] You can use the command script `sp_tool push`
 [3] Adaptations: modifications following breaking changes
+
+
+### TODO

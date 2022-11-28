@@ -122,12 +122,12 @@ def get_o_spreadsheet_hash(path) -> str:
 
 
 def retry_cmd(cmd_args: List[str], nbr_retry: int):
-    for i in range(nbr_retry):
+    for i in range(1, nbr_retry + 1):
         try:
             subprocess.check_output(cmd_args)
         except subprocess.CalledProcessError as e:
-            if i < nbr_retry - 1:
-                print(f"call #{i+1} failed. Retrying ...")
+            if i < nbr_retry:
+                print(f"call #{i} failed. Retrying ...")
                 time.sleep(0.5)
                 continue
             else:
