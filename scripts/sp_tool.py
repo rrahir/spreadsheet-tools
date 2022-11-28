@@ -44,11 +44,6 @@ def main():
         exit(0)
 
     if arguments["push"]:
-        spreadsheet_path = config["spreadsheet"]["repo_path"]
-        if not os.getcwd().startswith(spreadsheet_path):
-            sys.exit(
-                f"This command should be run from spreadsheet repository {spreadsheet_path}"
-            )
         push(
             config,
             arguments["-l"],
