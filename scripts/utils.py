@@ -51,7 +51,7 @@ def guess_spreadsheet_repo() -> str:
 
 
 def guess_odoo_repo() -> str:
-    # TODO support cross platform
+    # TODO support cross platform / see def find_file
     print("looking for Odoo Community repository...")
     try:
         cmd = ["find", USER_HOME, "-type", "f", "-iname", "odoo-bin"]
@@ -111,10 +111,10 @@ def find_file() -> str:
     return ""
 
 
-def get_o_spreadsheet_hash(path) -> str:
+def get_o_spreadsheet_hash(o_spredsheet_path) -> str:
     # TORORAR make it crossplatform
     lines = (
-        subprocess.check_output(["tail", "-10", path])
+        subprocess.check_output(["tail", "-10", o_spredsheet_path])
         .decode("utf-8")
         .split("\n")
     )
@@ -122,12 +122,12 @@ def get_o_spreadsheet_hash(path) -> str:
 
 
 def retry_cmd(cmd_args: List[str], nbr_retry: int):
-    for i in range(nbr_retry):
+    for i in range(1, nbr_retry + 1):
         try:
             result = subprocess.check_output(cmd_args)
         except subprocess.CalledProcessError as e:
-            if i < nbr_retry - 1:
-                print(f"call #{i+1} failed. Retrying ...")
+            if i < nbr_retry:
+                print(f"call #{i} failed. Retrying ...")
                 time.sleep(0.5)
                 continue
             else:

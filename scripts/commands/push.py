@@ -3,7 +3,13 @@ import subprocess
 import os
 import sys
 
-from helpers import commit_message, checkout, run_dist, copy_dist
+from helpers import (
+    get_commits,
+    checkout,
+    run_build,
+    copy_build,
+    odoo_commit_title,
+)
 from utils import pushd
 from shared import get_spreadsheet_branch, get_version_info
 
@@ -26,16 +32,20 @@ def push(config: configparser.ConfigParser, local=False):
     repo_path = config[repo]["repo_path"]
 
     full_path = os.path.join(repo_path, rel_path)
-    message = commit_message(
-        spreadsheet_path, version, spreadsheet_branch, rel_path, version
+    body = get_commits(
+        spreadsheet_path,
+        version,
+        spreadsheet_branch,
     )
-    if not message:
+    if not body:
         sys.exit(
-            f"The branch ${spreadsheet_branch} does not contain any new commits."
+            f"The branch {spreadsheet_branch} does not contain any new commits."
         )
+
+    message = f"{odoo_commit_title(rel_path, version)}{body}"
     checkout(repo_path, spreadsheet_branch)
-    run_dist(config)
-    copy_dist(config, full_path)
+    run_build(config)
+    copy_build(config, full_path)
     with pushd(repo_path):
         subprocess.check_output(["git", "commit", "-am", message])
         if not local:

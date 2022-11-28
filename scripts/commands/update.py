@@ -6,45 +6,25 @@ from uuid import uuid4
 from shared import spreadsheet_odoo_versions
 from utils import pushd, get_o_spreadsheet_hash
 from helpers import (
-    get_existing_prs,
     checkout,
-    reset,
-    commit_message,
-    run_dist,
-    copy_dist,
+    get_commits,
+    copy_build,
+    odoo_commit_title,
+    fetch_repositories,
+    get_odoo_prs,
     make_PR,
+    reset,
+    run_build,
 )
 
 
 def update(config: configparser.ConfigParser):
-    print("\n=== UPDATE ===\nThis may take a while ;-)\n")
+    print("\n=== UPDATE ODOO ===\nThis may take a while ;-)\n")
     spreadsheet_path = config["spreadsheet"]["repo_path"]
-    ent_path = config["enterprise"]["repo_path"]
-    versions = [k for k in spreadsheet_odoo_versions.keys()]
-
-    print("fetching o-spreadsheet ...")
-    with pushd(spreadsheet_path):
-        subprocess.check_output(
-            [
-                "git",
-                "fetch",
-                config["spreadsheet"]["remote"],
-            ]
-            + versions
-        )
-    print("fetching enterprise ...")
-    with pushd(config["enterprise"]["repo_path"]):
-        subprocess.check_output(
-            ["git", "fetch", config["enterprise"]["remote"]] + versions
-        )
-    print("fetching odoo ...")
-    with pushd(config["odoo"]["repo_path"]):
-        subprocess.check_output(
-            ["git", "fetch", config["odoo"]["remote"]] + versions
-        )
+    fetch_repositories(config)
     old_prs = []
     new_prs = []
-    existing_prs = get_existing_prs(config)
+    existing_prs = get_odoo_prs(config)
     today = date.today()
     d = f"{str(today.day).zfill(2)}{str(today.month).zfill(2)}"
     h = str(uuid4())[:4]
@@ -62,28 +42,49 @@ def update(config: configparser.ConfigParser):
         repo_path = config[repo]["repo_path"]
         full_path = os.path.join(repo_path, rel_path)
         o_branch = f"{version}-spreadsheet-{d}-{h}-BI"
+
         # checkout o-spreadsheet
         checkout(spreadsheet_path, version)
         reset(spreadsheet_path, version)
+
         # checkout Odoo  on update branch
         checkout(repo_path, version, force=True)
         reset(repo_path, version)
+
         # build commit message - build/cp dist - push on remote
         with pushd(repo_path):
             full_file_path = os.path.join(full_path, "o_spreadsheet.js")
+
+            # check last commit on o-spreadsheet is a REL
+            with pushd(spreadsheet_path):
+                cmd = [
+                    "git",
+                    "log",
+                    "HEAD^..HEAD",
+                    "--pretty=format:%s",
+                ]
+                commit = subprocess.check_output(cmd).decode("utf-8")
+                if not commit.startswith("[REL]"):
+                    print(
+                        f"""The last commit on o-spreadsheet in version {version} is not a release.\n"""
+                        """Please run the `release` script beforehand."""
+                    )
+                    continue
+
+            # find all commits since last update
             hash = get_o_spreadsheet_hash(full_file_path)
-            message = commit_message(
-                spreadsheet_path, hash, version, rel_path, version
-            )
-            if not message:
+            body = get_commits(spreadsheet_path, hash, version)
+            if not body:
                 print(
                     f"Branch {version} is up-to-date on odoo/{repo}. Skipping..."
                 )
                 continue
+
+            message = f"{odoo_commit_title(rel_path, version)}{body}"
             checkout(repo_path, o_branch)
-            # build & cp dist
-            run_dist(config)
-            copy_dist(config, full_path)
+            # build & cp build
+            run_build(config)
+            copy_build(config, full_path)
             # commit
             subprocess.check_output(["git", "commit", "-am", message])
             cmd = [
