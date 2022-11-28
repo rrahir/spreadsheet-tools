@@ -11,7 +11,7 @@ def check_git_version():
     git_version = re.findall("(\d+\.\d+(?:\.\d+)?)", git_version_string)[0]
     [major, minor, _] = git_version.split(".")
 
-    if (int(major) * 10000 + int(minor)) < 2022:
+    if (int(major) * 10000 + int(minor)) < 20022:
         raise Exception(
             "This script runs on git version >= 2.22. Please update your git intall."
         )

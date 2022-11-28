@@ -3,6 +3,17 @@ import subprocess
 
 from utils import pushd
 
+VERBOSE = True
+
+
+def set_verbose(verbose: bool):
+    VERBOSE = verbose
+
+
+def get_verbose() -> bool:
+    return VERBOSE
+
+
 # { branch prefix (stable release): [version, filepath in enterprise]}
 spreadsheet_odoo_versions = {
     "14.0": [
