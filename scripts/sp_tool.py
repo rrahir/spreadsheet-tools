@@ -170,7 +170,6 @@ def push(config: configparser.ConfigParser, local=False):
                 exit(1)
     spreadsheet_branch = get_spreadsheet_branch(config)
     [repo, version, rel_path] = get_version_info(spreadsheet_branch)
-    o_branch = f"{version}-spreadsheet{spreadsheet_branch.split(version)[-1]}"
     repo_path = config[repo]["repo_path"]
 
     full_path = os.path.join(repo_path, rel_path)
@@ -181,7 +180,7 @@ def push(config: configparser.ConfigParser, local=False):
         sys.exit(
             f"The branch ${spreadsheet_branch} does not contain any new commits."
         )
-    checkout(repo_path, o_branch)
+    checkout(repo_path, spreadsheet_branch)
     run_dist(config)
     copy_dist(config, full_path)
     with pushd(repo_path):
@@ -192,7 +191,7 @@ def push(config: configparser.ConfigParser, local=False):
                 "push",
                 "-u",
                 config[repo]["remote-dev"],
-                o_branch,
+                spreadsheet_branch,
             ]
             subprocess.check_output(cmd)
 
@@ -200,13 +199,13 @@ def push(config: configparser.ConfigParser, local=False):
         # create an enterprise branch on remote for runbot builds
         ent_path = config["enterprise"]["repo_path"]
         with pushd(ent_path):
-            checkout(ent_path, o_branch)
+            checkout(ent_path, spreadsheet_branch)
             cmd = [
                 "git",
                 "push",
                 "-u",
                 config["enterprise"]["remote-dev"],
-                o_branch,
+                spreadsheet_branch,
             ]
             subprocess.check_output(cmd)
 
