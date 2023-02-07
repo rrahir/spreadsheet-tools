@@ -2,30 +2,36 @@ name: Release Workflow
 on:
   push:
     # Match LTS  and saas releases >= 10
-    branches: ["^[1-9][0-9].[0-9]$", "^saas-[1-9][0-9].[0-9]$", "master"]
+    # does not work ?
+    branches: ['[1-9][0-9].[0-9]', 'saas-[1-9][0-9].[0-9]', 'master']
 jobs:
   release:
-    if: contains(github.event.head_commit.message, "[REL]")
+    if: contains(github.event.head_commit.message, '[REL]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
+        with:
+          registry-url: 'https://registry.npmjs.org'
       - name: Parse
         id: parse
         # should work with le latest stable node
-      # parse-message will fail on invalid commit title/body
+        # parse-message will fail on invalid commit title/body
         run: |
-          npm install @actions/core && npm install @actions/github &&\
-          echo "data=$(tools/parse_message.js)" >> $GITHUB_OUTPUT
+          ls -la &&\
+          npm i @actions/core && npm i @actions/github &&\
+          echo "data=$(node tools/parse_message.js)" >> $GITHUB_OUTPUT
       # generate all builds
       - name: Build
-        run: npm ci && npm run dist
+        run: npm ci && npm run dist && ls -la
       - name: Release
         uses: ncipollo/release-action@v1.11.2
         with:
+          tag: ${{ fromJSON(steps.parse.outputs.data).version }}
           body: ${{ fromJSON(steps.parse.outputs.data).body }}
-          artifacts: "dist"
-      - name: publish
-        run: npm publish
+          artifacts: "./dist/*"
+      - name: Publish
+        run: npm publish --dry-run
         env:
+           # does not work
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
