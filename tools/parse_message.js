@@ -29,14 +29,20 @@ try {
     return !!line.match(COMMIT_REGEX);
   });
   trim(lines);
+  console.log(
+    JSON.stringify({
+      title,
+      version,
+      body: lines.join("\n"),
+    })
+  );
 } catch (error) {
   core.setFailed(error.message);
 }
-
-console.log(
-  JSON.stringify({
-    title,
-    version,
-    body: lines.join("\n"),
-  })
-);
+// console.log(
+//   JSON.stringify({
+//     title,
+//     version,
+//     body: lines.join("\n"),
+//   })
+// );
