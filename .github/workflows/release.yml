@@ -26,6 +26,6 @@ jobs:
           body: ${{ fromJSON(steps.parse.outputs.data).body }}
           artifacts: "dist"
       - name: publish
-        run: npm publish --access public
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

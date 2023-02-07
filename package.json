@@ -1,0 +1,23 @@
+{
+  "name": "@odoo/spreadsheet-tools",
+  "version": "1.0.0",
+  "description": "this is a test",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dist": "echo \"boum\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rrahir/spreadsheet-tools.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rrahir/spreadsheet-tools/issues"
+  },
+  "homepage": "https://github.com/rrahir/spreadsheet-tools#readme"
+}
