@@ -6,32 +6,28 @@ on:
     branches: ['[1-9][0-9].[0-9]', 'saas-[1-9][0-9].[0-9]', 'master']
 jobs:
   release:
-    if: contains(github.event.head_commit.message, '[REL]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-        with:
-          registry-url: 'https://registry.npmjs.org'
       - name: Parse
         id: parse
         # should work with le latest stable node
         # parse-message will fail on invalid commit title/body
         run: |
-          ls -la &&\
-          npm i @actions/core && npm i @actions/github &&\
+          npm i @actions/core @actions/github &&\
           echo "data=$(node tools/parse_message.js)" >> $GITHUB_OUTPUT
       # generate all builds
       - name: Build
-        run: npm ci && npm run dist && ls -la
+        run: npm ci && npm run dist
       - name: Release
         uses: ncipollo/release-action@v1.11.2
         with:
           tag: ${{ fromJSON(steps.parse.outputs.data).version }}
           body: ${{ fromJSON(steps.parse.outputs.data).body }}
-          artifacts: "./dist/*"
+          artifacts: "./dist/*.*"
       - name: Publish
-        run: npm publish --dry-run
+        run: git checkout -- . && npm publish --dry-run
         env:
            # does not work
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

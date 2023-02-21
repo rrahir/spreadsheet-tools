@@ -39,10 +39,3 @@ try {
 } catch (error) {
   core.setFailed(error.message);
 }
-// console.log(
-//   JSON.stringify({
-//     title,
-//     version,
-//     body: lines.join("\n"),
-//   })
-// );
