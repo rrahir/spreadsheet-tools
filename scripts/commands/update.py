@@ -4,7 +4,7 @@ import os
 from datetime import date
 from uuid import uuid4
 from shared import spreadsheet_odoo_versions
-from utils import pushd, get_o_spreadsheet_hash
+from utils import pushd, get_o_spreadsheet_js_hash
 from helpers import (
     checkout,
     get_commits,
@@ -15,6 +15,7 @@ from helpers import (
     make_PR,
     reset,
     run_build,
+    print_msg
 )
 
 
@@ -47,14 +48,14 @@ def update(config: configparser.ConfigParser):
         checkout(spreadsheet_path, version)
         reset(spreadsheet_path, version)
 
-        # checkout Odoo  on update branch
+        # checkout Odoo (Community/Enterprise) on update branch
         checkout(repo_path, version, force=True)
         reset(repo_path, version)
 
         # build commit message - build/cp dist - push on remote
         with pushd(repo_path):
             full_file_path = os.path.join(full_path, "o_spreadsheet.js")
-
+            spreadsheet_hash = version
             # check last commit on o-spreadsheet is a REL
             with pushd(spreadsheet_path):
                 cmd = [
@@ -65,15 +66,24 @@ def update(config: configparser.ConfigParser):
                 ]
                 commit = subprocess.check_output(cmd).decode("utf-8")
                 if not commit.startswith("[REL]"):
-                    print(
+                    print_msg(
                         f"""The last commit on o-spreadsheet in version {version} is not a release.\n"""
-                        """Please run the `release` script beforehand."""
+                        """Defaulting on last [REL] commit...""", "WARNING"
                     )
-                    continue
+                    cmd = [
+                        "git",
+                        "log",
+                        "--pretty=format:%h",
+                        "-n",
+                        "1",
+                        "--grep",
+                        "\\[REL\\]",
+                    ]
+                    spreadsheet_hash = subprocess.check_output(cmd).decode("utf-8")
 
             # find all commits since last update
-            hash = get_o_spreadsheet_hash(full_file_path)
-            body = get_commits(spreadsheet_path, hash, version)
+            odoo_hash = get_o_spreadsheet_js_hash(full_file_path)
+            body = get_commits(spreadsheet_path, odoo_hash, spreadsheet_hash)
             if not body:
                 print(
                     f"Branch {version} is up-to-date on odoo/{repo}. Skipping..."

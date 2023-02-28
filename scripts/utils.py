@@ -111,7 +111,7 @@ def find_file() -> str:
     return ""
 
 
-def get_o_spreadsheet_hash(o_spredsheet_path) -> str:
+def get_o_spreadsheet_js_hash(o_spredsheet_path) -> str:
     # TORORAR make it crossplatform
     lines = (
         subprocess.check_output(["tail", "-10", o_spredsheet_path])
