@@ -129,8 +129,9 @@ def get_commits(path, old, new):
             "git",
             "log",
             f"{old}..{new}",
-            "--pretty=format:https://github.com/odoo/o-spreadsheet/commit/%h %s",
+            "--pretty=format:https://github.com/odoo/o-spreadsheet/commit/%h %s %(trailers:key=Task,separator=%20)",
         ]
+
         commits = subprocess.check_output(cmd).decode("utf-8")
         if not commits:
             return ""
