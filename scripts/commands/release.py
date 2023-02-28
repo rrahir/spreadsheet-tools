@@ -96,10 +96,10 @@ def release(config: configparser.ConfigParser):
     # print All PR's, split between new and old
     if old_prs:
         print("\nAlready existing PRs:")
-        print("\n".join([f"\t{version} - {url}" for [version, url] in old_prs]))
+        print("\n".join([f"\t{version} - <{url}>" for [version, url] in old_prs]))
     if new_prs:
         print("\nNewly created PRs:")
-        print("\n".join([f"\t{version} - {url}" for [version, url] in new_prs]))
+        print("\n".join([f"\t{version} - <{url}>" for [version, url] in new_prs]))
     if not (old_prs or new_prs):
         print("Every versions are up-to-date")
 
