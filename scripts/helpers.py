@@ -163,8 +163,8 @@ def run_dist(config: configparser.ConfigParser):
         except Exception as e:
             pp.pprint(e.cmd)
             pp.pprint(e.returncode)
-            print(
-                "You might be running a bad version of npm packages. Please run 'npm install' and retry :)"
+            print_msg(
+                "You might be running a bad version of npm packages. Please run 'npm install' and retry :)", "WARNING"
             )
             exit(1)
 
@@ -180,9 +180,8 @@ def run_build(config: configparser.ConfigParser):
         except Exception as e:
             pp.pprint(e.cmd)
             pp.pprint(e.returncode)
-            print(
-                "You might be running a bad version of npm packages. Please run 'npm install' and retry :)"
-            )
+            print_msg(
+                "You might be running a bad version of npm packages. Please run 'npm install' and retry :)", "WARNING")
             exit(1)
 
 
@@ -237,3 +236,23 @@ def fetch_repositories(config, spreadsheet_only=False):
         subprocess.check_output(
             ["git", "fetch", config["odoo"]["remote"]] + versions
         )
+
+
+bcolors = {
+    "HEADER": '\033[95m',
+    "OKBLUE": '\033[94m',
+    "OKCYAN": '\033[96m',
+    "OKGREEN": '\033[92m',
+    "WARNING": '\033[93m',
+    "FAIL": '\033[91m',
+    "ENDC": '\033[0m',
+    "BOLD": '\033[1m',
+    "UNDERLINE": '\033[4m',
+}
+
+
+def print_msg(text: str, level=False):
+    if level:
+        print(bcolors[level] + text + bcolors["ENDC"])
+    else:
+        print(text)
