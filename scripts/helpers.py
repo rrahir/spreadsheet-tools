@@ -188,7 +188,7 @@ def run_build(config: configparser.ConfigParser):
 
 def copy_build(config: configparser.ConfigParser, destination_path: str):
     with pushd(os.path.join(config["spreadsheet"]["repo_path"], "build")):
-        print("Copying dist...")
+        print("Copying build...")
         # find files
         for file in ["o_spreadsheet.js", "o_spreadsheet.xml"]:
             if os.path.isfile(file):
