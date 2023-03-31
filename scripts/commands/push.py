@@ -58,16 +58,3 @@ def push(config: configparser.ConfigParser, local=False):
             ]
             subprocess.check_output(cmd)
 
-    if repo == "odoo" and not local:
-        # create an enterprise branch on remote for runbot builds
-        ent_path = config["enterprise"]["repo_path"]
-        with pushd(ent_path):
-            checkout(ent_path, spreadsheet_branch)
-            cmd = [
-                "git",
-                "push",
-                "-u",
-                config["enterprise"]["remote-dev"],
-                spreadsheet_branch,
-            ]
-            subprocess.check_output(cmd)
