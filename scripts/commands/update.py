@@ -15,7 +15,8 @@ from helpers import (
     make_PR,
     reset,
     run_build,
-    print_msg
+    print_msg,
+    commit_message
 )
 
 
@@ -90,7 +91,7 @@ def update(config: configparser.ConfigParser):
                 )
                 continue
 
-            message = f"{odoo_commit_title(rel_path, version)}{body}"
+            message = commit_message(odoo_commit_title(rel_path, version), body)
             checkout(repo_path, o_branch)
             # build & cp build
             run_build(config)

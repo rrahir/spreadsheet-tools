@@ -16,6 +16,7 @@ from helpers import (
     make_PR,
     reset,
     spreadsheet_release_title,
+    commit_message
 )
 from utils import pushd
 from shared import spreadsheet_odoo_versions
@@ -72,7 +73,7 @@ def release(config: configparser.ConfigParser):
                 continue
 
             tag = increment_package_version(spreadsheet_path, version)
-            message = f"{spreadsheet_release_title(tag)}{body}"
+            message = commit_message(spreadsheet_release_title(tag), body)
 
             # commit
             release_branch = f"{tag}-release-{d}-{h}-BI"
@@ -96,10 +97,12 @@ def release(config: configparser.ConfigParser):
     # print All PR's, split between new and old
     if old_prs:
         print("\nAlready existing PRs:")
-        print("\n".join([f"\t{version} - <{url}>" for [version, url] in old_prs]))
+        print(
+            "\n".join([f"\t{version} - <{url}>" for [version, url] in old_prs]))
     if new_prs:
         print("\nNewly created PRs:")
-        print("\n".join([f"\t{version} - <{url}>" for [version, url] in new_prs]))
+        print(
+            "\n".join([f"\t{version} - <{url}>" for [version, url] in new_prs]))
     if not (old_prs or new_prs):
         print("Every versions are up-to-date")
 

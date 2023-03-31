@@ -9,6 +9,7 @@ from helpers import (
     run_build,
     copy_build,
     odoo_commit_title,
+    commit_message
 )
 from utils import pushd
 from shared import get_spreadsheet_branch, get_version_info
@@ -42,7 +43,7 @@ def push(config: configparser.ConfigParser, local=False):
             f"The branch {spreadsheet_branch} does not contain any new commits."
         )
 
-    message = f"{odoo_commit_title(rel_path, version)}{body}"
+    message = commit_message(odoo_commit_title(rel_path, version), body)
     checkout(repo_path, spreadsheet_branch)
     run_build(config)
     copy_build(config, full_path)
@@ -57,4 +58,3 @@ def push(config: configparser.ConfigParser, local=False):
                 spreadsheet_branch,
             ]
             subprocess.check_output(cmd)
-

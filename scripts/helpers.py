@@ -135,7 +135,7 @@ def get_commits(path, old, new):
         commits = subprocess.check_output(cmd).decode("utf-8")
         if not commits:
             return ""
-        return f"\n\n### Contains the following commits:\n\n{commits}"
+        return f"### Contains the following commits:\n\n{commits}"
 
 
 def spreadsheet_release_title(tag):
@@ -257,3 +257,7 @@ def print_msg(text: str, level=False):
         print(bcolors[level] + text + bcolors["ENDC"])
     else:
         print(text)
+
+
+def commit_message(title:str, body:str)->str:
+    return f"{title}\n\n{body}"
