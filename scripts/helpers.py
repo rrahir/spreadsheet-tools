@@ -153,6 +153,17 @@ def odoo_commit_title(rel_path, version="master"):
     return title
 
 
+def enterprise_commit_title(spreadsheet_path, odoo_version="master"):
+    # returns a commit title based o nthe new o_spreadshet package version
+    with pushd(spreadsheet_path):
+        with open("package.json") as f:
+            package_version = json.load(f)["version"]
+
+    return "{} *_spreadsheet_*: Update o_sreadsheet library to version {}".format(
+        odoo_version == "master" and "[IMP]" or "[FIX]", package_version
+    )
+
+
 def run_dist(config: configparser.ConfigParser):
     with pushd(config["spreadsheet"]["repo_path"]):
         print("Compiling dist...")
@@ -259,5 +270,5 @@ def print_msg(text: str, level=False):
         print(text)
 
 
-def commit_message(title:str, body:str)->str:
+def commit_message(title: str, body: str) -> str:
     return f"{title}\n\n{body}"

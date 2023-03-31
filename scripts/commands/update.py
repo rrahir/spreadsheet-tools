@@ -10,6 +10,7 @@ from helpers import (
     get_commits,
     copy_build,
     odoo_commit_title,
+    enterprise_commit_title,
     fetch_repositories,
     get_odoo_prs,
     make_PR,
@@ -80,7 +81,8 @@ def update(config: configparser.ConfigParser):
                         "--grep",
                         "\\[REL\\]",
                     ]
-                    spreadsheet_hash = subprocess.check_output(cmd).decode("utf-8")
+                    spreadsheet_hash = subprocess.check_output(
+                        cmd).decode("utf-8")
 
             # find all commits since last update
             odoo_hash = get_o_spreadsheet_js_hash(full_file_path)
@@ -91,7 +93,8 @@ def update(config: configparser.ConfigParser):
                 )
                 continue
 
-            message = commit_message(odoo_commit_title(rel_path, version), body)
+            commit_title = odoo_commit_title(rel_path, version)
+            message = commit_message(commit_title, body)
             checkout(repo_path, o_branch)
             # build & cp build
             run_build(config)
@@ -109,9 +112,13 @@ def update(config: configparser.ConfigParser):
 
         if repo == "odoo":
             # create an enterprise branch for runbot builds
+            # We cannot allow empty branches as their HEAD hash will collide with stable branches
+            # Hence we create an empty commit that informs the version bump and refers to the newest lib hash
             ent_path = config["enterprise"]["repo_path"]
             with pushd(ent_path):
                 checkout(ent_path, o_branch)
+                message = enterprise_commit_title(spreadsheet_path, version)
+                subprocess.check_output(["git", "commit", "-am", message, "--allow-empty"])
                 cmd = [
                     "git",
                     "push",
@@ -128,10 +135,12 @@ def update(config: configparser.ConfigParser):
     # print All PR's, split between new and old
     if old_prs:
         print("\nAlready existing PRs:")
-        print("\n".join([f"\t{version} - <{url}>" for [version, url] in old_prs]))
+        print(
+            "\n".join([f"\t{version} - <{url}>" for [version, url] in old_prs]))
     if new_prs:
         print("\nNewly created PRs:")
-        print("\n".join([f"\t{version} - <{url}>" for [version, url] in new_prs]))
+        print(
+            "\n".join([f"\t{version} - <{url}>" for [version, url] in new_prs]))
     if not (old_prs or new_prs):
         print("Every versions are up-to-date")
 
