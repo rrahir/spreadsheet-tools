@@ -159,7 +159,7 @@ def enterprise_commit_title(spreadsheet_path, odoo_version="master"):
         with open("package.json") as f:
             package_version = json.load(f)["version"]
 
-    return "{} *_spreadsheet_*: Update o_sreadsheet library to version {}".format(
+    return "{} *_spreadsheet_*: Update o_spreadsheet library to version {}".format(
         odoo_version == "master" and "[IMP]" or "[FIX]", package_version
     )
 
