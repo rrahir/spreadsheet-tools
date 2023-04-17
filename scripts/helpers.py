@@ -206,7 +206,10 @@ def copy_build(config: configparser.ConfigParser, destination_path: str):
                 shutil.copy(file, destination_path)
 
 
-def make_PR(path, version, stop=True) -> str:
+def make_PR(path, version, **kwargs) -> str:
+    stop = kwargs.get("stop", True)
+    #this can only be used with proper clearance
+    autoCommit = kwargs.get("auto", False)
     print("making PR", version, path)
     with pushd(path):
         subprocess.check_output(
@@ -218,6 +221,10 @@ def make_PR(path, version, stop=True) -> str:
         if stop:
             retry_cmd(
                 ["gh", "pr", "comment", url, "--body", "fw-bot ignore"], 3
+            )
+        if autoCommit:
+            retry_cmd(
+                ["gh", "pr", "comment", url, "--body", "robodoo r+"], 3
             )
         return url
 
