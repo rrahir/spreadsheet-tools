@@ -91,7 +91,7 @@ def release(config: configparser.ConfigParser):
             subprocess.check_output(cmd)
 
         # make Pr
-        url = make_PR(spreadsheet_path, version, {"auto": True})
+        url = make_PR(spreadsheet_path, version, auto=True)
         new_prs.append([version, url])
 
     # print All PR's, split between new and old
