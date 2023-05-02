@@ -23,7 +23,7 @@ def check_git_version():
 def check_platform():
     # tODORAR to test on windaube instances
     # make it windows friendly and then remove this check
-    if platform.system() not in ["Darwwin", "Linux"]:
+    if platform.system() not in ["Darwin", "Linux"]:
         sys.exit(
             "This script currently only works on unix-bases OS."
             "Please run the script in WSL.and/or consult https://github.com/rrahir/spreadsheet-tools#readme"
