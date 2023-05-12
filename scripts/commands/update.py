@@ -141,6 +141,7 @@ def update(config: configparser.ConfigParser):
         print("\nNewly created PRs:")
         print(
             "\n".join([f"\t{version} - <{url}>" for [version, url] in new_prs]))
+        print(f"Runbot builds: <https://runbot.odoo.com/?search=spreadsheet-{d}-{h}-BI>")
     if not (old_prs or new_prs):
         print("Every versions are up-to-date")
 
