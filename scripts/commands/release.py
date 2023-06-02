@@ -39,7 +39,7 @@ def release(config: configparser.ConfigParser):
         print("=" * len(text))
         if version in existing_prs:
             print(
-                f"Branch {version} already has a pending release PR on odoo/o-spreadsheet. Skipping..."
+                f"Branch {version} already has a pending release PR on odoo/o-spreadsheet. Skipping...\n"
             )
             old_prs.append([version, existing_prs[version]])
             continue
@@ -68,7 +68,7 @@ def release(config: configparser.ConfigParser):
             )
             if not body:
                 print(
-                    f"No new commits for version {version}. Skipping release..."
+                    f"No new commits for version {version}. Skipping release...\n"
                 )
                 continue
 

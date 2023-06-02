@@ -37,7 +37,7 @@ def update(config: configparser.ConfigParser):
         print("=" * len(text))
         if version in existing_prs:
             print(
-                f"Branch {version} already has a pending PR on odoo/{repo}. Skipping..."
+                f"Branch {version} already has a pending PR on odoo/{repo}. Skipping...\n"
             )
             old_prs.append([version, existing_prs[version]])
             continue
@@ -89,7 +89,7 @@ def update(config: configparser.ConfigParser):
             body = get_commits(spreadsheet_path, odoo_hash, spreadsheet_hash)
             if not body:
                 print(
-                    f"Branch {version} is up-to-date on odoo/{repo}. Skipping..."
+                    f"Branch {version} is up-to-date on odoo/{repo}. Skipping...\n"
                 )
                 continue
 
