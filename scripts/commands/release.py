@@ -16,7 +16,8 @@ from helpers import (
     make_PR,
     reset,
     spreadsheet_release_title,
-    commit_message
+    commit_message,
+    print_msg
 )
 from utils import pushd
 from shared import spreadsheet_odoo_versions
@@ -67,8 +68,8 @@ def release(config: configparser.ConfigParser):
                 version,
             )
             if not body:
-                print(
-                    f"No new commits for version {version}. Skipping release...\n"
+                print_msg(
+                    f"No new commits for version {version}. Skipping release...\n", "WARNING"
                 )
                 continue
 
