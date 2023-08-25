@@ -1,0 +1,32 @@
+name: Spreadsheet CI
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+jobs:
+  "task_trailer":
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: rmacklin/fetch-through-merge-base@v0
+        with:
+          base_ref: ${{ github.event.pull_request.base.sha }}
+          head_ref: ${{ github.event.pull_request.head.sha }}
+      - name: Task trailer
+        id: task_trailer
+        run: |
+          # Check commits 'Task' trailer presence
+          task_regex="^Task:\s"
+          base_ref=${{ github.event.pull_request.base.sha }}
+          head_ref=${{ github.event.pull_request.head.sha }}
+          commits=$(git log $base_ref..$head_ref --pretty=format:"%h")
+          for variable in $commits
+          do
+              message=$(git log "$variable^..$variable" --pretty=format:"%B")
+              if test $(echo "$message" | grep -e $task_regex | wc -l) -eq 0; then
+                  echo "Commit $variable is missing \"Task:\" trailer"
+                  echo "Commit message:"
+                  echo "$message"
+                  exit 1 
+              fi
+          done
+          exit 0
