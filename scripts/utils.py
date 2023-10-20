@@ -112,13 +112,24 @@ def find_file() -> str:
 
 
 def get_o_spreadsheet_js_hash(o_spredsheet_path) -> str:
+    """Extract the commit hash from the o_spreadsheet.js file footer
+    which looks like this:
+    ```
+    __info__.version = "16.5.0-alpha.10";
+    __info__.date = "2023-10-19T10:55:27.590Z";
+    __info__.hash = "031593c2";
+    ```
+    """
     # TORORAR make it crossplatform
     lines = (
         subprocess.check_output(["tail", "-10", o_spredsheet_path])
         .decode("utf-8")
         .split("\n")
     )
-    return [line for line in lines if "hash" in line][0][-9:-2]
+    hash_line = [line for line in lines if "hash" in line][0]
+    # it can be a single or double quotes string
+    commit_hash = re.findall(r"[\",'](.+?)[\",']", hash_line)[0]
+    return commit_hash
 
 
 def retry_cmd(cmd_args: List[str], nbr_retry: int):
