@@ -19,24 +19,12 @@ def get_verbose() -> bool:
 # { branch prefix (stable release): [version, filepath in enterprise]}
 # TODO: find another way to get the version to ordinate them
 spreadsheet_odoo_versions = {
-    "14.0": [
-        "enterprise",
-        "14.0",
-        "documents_spreadsheet/static/src/js/o-spreadsheet/",
-    ],
     "15.0": [
         "enterprise",
         "15.0",
         "documents_spreadsheet/static/src/js/o_spreadsheet/",
     ],
-    "saas-15.2": [
-        "enterprise",
-        "saas-15.2",
-        "documents_spreadsheet_bundle/static/src/o_spreadsheet/",
-    ],
     "16.0": ["odoo", "16.0", "addons/spreadsheet/static/src/o_spreadsheet/"],
-    "saas-16.1": ["odoo", "saas-16.1", "addons/spreadsheet/static/src/o_spreadsheet/"],
-    "saas-16.2": ["odoo", "saas-16.2", "addons/spreadsheet/static/src/o_spreadsheet/"],
     "saas-16.3": ["odoo", "saas-16.3", "addons/spreadsheet/static/src/o_spreadsheet/"],
     "saas-16.4": ["odoo", "saas-16.4", "addons/spreadsheet/static/src/o_spreadsheet/"],
     "17.0": ["odoo", "17.0", "addons/spreadsheet/static/src/o_spreadsheet/"],
@@ -67,3 +55,22 @@ def get_version_info(branch: str) -> "tuple[str, str]":
             return spreadsheet_odoo_versions[version]
     print("wrong prefix in o_spreadsheet branch. Please change it")
     exit(1)
+
+
+
+
+## dropped versions
+# spreadsheet_odoo_versions = {
+    # "14.0": [
+    #     "enterprise",
+    #     "14.0",
+    #     "documents_spreadsheet/static/src/js/o-spreadsheet/",
+    # ],
+    # "saas-15.2": [
+    #     "enterprise",
+    #     "saas-15.2",
+    #     "documents_spreadsheet_bundle/static/src/o_spreadsheet/",
+    # ],
+    # "saas-16.1": ["odoo", "saas-16.1", "addons/spreadsheet/static/src/o_spreadsheet/"],
+    # "saas-16.2": ["odoo", "saas-16.2", "addons/spreadsheet/static/src/o_spreadsheet/"],
+# }
