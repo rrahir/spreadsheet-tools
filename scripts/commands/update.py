@@ -17,7 +17,7 @@ from helpers import (
     reset,
     run_build,
     print_msg,
-    commit_message
+    commit_message,
 )
 
 
@@ -70,7 +70,8 @@ def update(config: configparser.ConfigParser):
                 if not commit.startswith("[REL]"):
                     print_msg(
                         f"""The last commit on o-spreadsheet in version {version} is not a release.\n"""
-                        """Defaulting on last [REL] commit...""", "WARNING"
+                        """Defaulting on last [REL] commit...""",
+                        "WARNING",
                     )
                     cmd = [
                         "git",
@@ -81,16 +82,13 @@ def update(config: configparser.ConfigParser):
                         "--grep",
                         "\\[REL\\]",
                     ]
-                    spreadsheet_hash = subprocess.check_output(
-                        cmd).decode("utf-8")
+                    spreadsheet_hash = subprocess.check_output(cmd).decode("utf-8")
 
             # find all commits since last update
             odoo_hash = get_o_spreadsheet_js_hash(full_file_path)
             body = get_commits(spreadsheet_path, odoo_hash, spreadsheet_hash)
             if not body:
-                print(
-                    f"Branch {version} is up-to-date on odoo/{repo}. Skipping...\n"
-                )
+                print(f"Branch {version} is up-to-date on odoo/{repo}. Skipping...\n")
                 continue
 
             commit_title = odoo_commit_title(rel_path, version)
@@ -118,7 +116,9 @@ def update(config: configparser.ConfigParser):
             with pushd(ent_path):
                 checkout(ent_path, o_branch)
                 message = enterprise_commit_title(spreadsheet_path, version)
-                subprocess.check_output(["git", "commit", "-am", message, "--allow-empty"])
+                subprocess.check_output(
+                    ["git", "commit", "-am", message, "--allow-empty"]
+                )
                 cmd = [
                     "git",
                     "push",
@@ -135,13 +135,13 @@ def update(config: configparser.ConfigParser):
     # print All PR's, split between new and old
     if old_prs:
         print("\nAlready existing PRs:")
-        print(
-            "\n".join([f"\t{version} - <{url}>" for [version, url] in old_prs]))
+        print("\n".join([f"\t{version} - <{url}>" for [version, url] in old_prs]))
     if new_prs:
         print("\nNewly created PRs:")
+        print("\n".join([f"\t{version} - <{url}>" for [version, url] in new_prs]))
         print(
-            "\n".join([f"\t{version} - <{url}>" for [version, url] in new_prs]))
-        print(f"Runbot builds: <https://runbot.odoo.com/?search=spreadsheet-{d}-{h}-BI>")
+            f"Runbot builds: <https://runbot.odoo.com/?search=spreadsheet-{d}-{h}-BI>"
+        )
     if not (old_prs or new_prs):
         print("Every versions are up-to-date")
 
