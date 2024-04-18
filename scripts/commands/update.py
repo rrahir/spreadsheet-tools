@@ -110,24 +110,6 @@ def update(config: configparser.ConfigParser):
             ]
             subprocess.check_output(cmd)
 
-        if repo == "odoo":
-            # create an enterprise branch for runbot builds
-            # We cannot allow empty branches as their HEAD hash will collide with stable branches
-            # Hence we create an empty commit that informs the version bump and refers to the newest lib hash
-            ent_path = config["enterprise"]["repo_path"]
-            with pushd(ent_path):
-                checkout(ent_path, o_branch)
-                message = enterprise_commit_title(spreadsheet_path, version)
-                subprocess.check_output(["git", "commit", "-am", message, "--allow-empty"])
-                cmd = [
-                    "git",
-                    "push",
-                    "-u",
-                    config["enterprise"]["remote-dev"],
-                    o_branch,
-                ]
-                subprocess.check_output(cmd)
-
         # make Pr
         url = make_PR(repo_path, version)
         new_prs.append([version, url])
