@@ -28,7 +28,7 @@ def main():
 
     Usage:
         sp_tool update [-s]
-        sp_tool push [-l | -s]
+        sp_tool push [-l -s | -f -s]
         sp_tool list-pr
         sp_tool build
         sp_tool release
@@ -43,7 +43,6 @@ def main():
 
     """
     arguments = docopt(main.__doc__, version="0.1.0")
-
     # LOADER
     config = loader()["config"]
     if arguments["--version"]:
@@ -65,6 +64,7 @@ def main():
         push(
             config,
             arguments["-l"],
+            arguments["-f"]
         )
         exit(0)
 

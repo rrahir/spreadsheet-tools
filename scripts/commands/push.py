@@ -15,7 +15,7 @@ from utils import pushd
 from shared import get_spreadsheet_branch, get_version_info
 
 
-def push(config: configparser.ConfigParser, local=False):
+def push(config: configparser.ConfigParser, local=False, forceBuild=False):
     print("\n=== PUSH ===\n")
     spreadsheet_path = config["spreadsheet"]["repo_path"]
 
@@ -43,7 +43,8 @@ def push(config: configparser.ConfigParser, local=False):
             f"The branch {spreadsheet_branch} does not contain any new commits."
         )
 
-    message = commit_message(odoo_commit_title(rel_path, version), body)
+    title = forceBuild and odoo_commit_title(rel_path, version) or "wip o-spreadsheet lib update"
+    message = commit_message(title, body)
     checkout(repo_path, spreadsheet_branch)
     run_build(config)
     copy_build(config, full_path)
