@@ -28,7 +28,7 @@ def main():
 
     Usage:
         sp_tool update [-s]
-        sp_tool push [-l -s | -f -s]
+        sp_tool push [-l -f -s]
         sp_tool list-pr
         sp_tool build
         sp_tool release
