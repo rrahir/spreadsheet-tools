@@ -74,7 +74,7 @@ def release(config: configparser.ConfigParser):
                 continue
 
             tag = increment_package_version(spreadsheet_path, version)
-            message = commit_message(spreadsheet_release_title(tag), body)
+            message = commit_message(spreadsheet_release_title(tag), body + "\n\nTask: 0")
 
             # commit
             release_branch = f"{tag}-release-{d}-{h}-BI"
