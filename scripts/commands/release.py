@@ -20,21 +20,21 @@ from helpers import (
     print_msg
 )
 from utils import pushd
-from shared import spreadsheet_odoo_versions
 
 
-def release(config: configparser.ConfigParser):
+def release(config: configparser.ConfigParser, versions: list[str]):
     # todo
     print("\n=== RELEASE O-SPREADSHEET ===\nThis may take a while ;-)\n")
     spreadsheet_path = config["spreadsheet"]["repo_path"]
-    fetch_repositories(config, True)
+    fetch_repositories(config, versions, True)
     old_prs = []
     new_prs = []
     existing_prs = get_o_spreadsheet_release_prs(config)
     today = date.today()
     d = f"{str(today.day).zfill(2)}{str(today.month).zfill(2)}"
     h = str(uuid4())[:4]
-    for version in spreadsheet_odoo_versions.keys():
+
+    for version in versions:
         text = f"Processing version {version}"
         print(text)
         print("=" * len(text))

@@ -9,7 +9,7 @@ import webbrowser
 from docopt import docopt
 
 from commands import list_pr, update, push, release, build
-from shared import set_verbose
+from shared import set_verbose, spreadsheet_odoo_versions
 from versions import check_versions
 from config import get_config
 
@@ -27,37 +27,58 @@ def main():
     =================
 
     Usage:
-        sp_tool update [-s]
+        sp_tool release [-s] [-t | -e] [TARGET...]
+        sp_tool update [-s] [-t | -e] [TARGET...]
+        sp_tool build [-s]
         sp_tool push [-l -f -s]
         sp_tool list-pr
-        sp_tool build
-        sp_tool release
         sp_tool process
-        sp_tool (-h | --help | --version )
+        sp_tool -h | --help | --version
 
     Options:
         -h --help   Show this screen
         --version   Show version
         -l          commit locally (don't push on remote)
         -s          silent mode
+        -t          include branches
+        -e          exclude branches
 
     """
-    arguments = docopt(main.__doc__, version="0.1.0")
+    arguments = docopt(main.__doc__, version="0.1.1", options_first=False)
     # LOADER
     config = loader()["config"]
-    if arguments["--version"]:
-        print(f"Version {arguments['version']}")
-        exit(0)
+    # pre-process
+    if arguments["-t"] and arguments["-e"]:
+        sys.exit("Arguments -t and -e are mutually exclusive. Make a choice ;-)")
+
+    if not len(arguments["TARGET"]) and (arguments["-e"] or arguments["-t"]):
+        sys.exit("Please provide target versions")
+
+    target_argument = [t.lower() for t in arguments["TARGET"]]
+    if any(target not in spreadsheet_odoo_versions for target in target_argument):
+        sys.exit("Some specified targets do not exist (anymore?)\n")
+
+    if arguments["-e"]:
+        targetted_versions = [v for v in spreadsheet_odoo_versions.keys() if v not in target_argument]
+    elif len(target_argument):
+        targetted_versions = [v for v in spreadsheet_odoo_versions.keys() if v in target_argument]
+    else:
+        targetted_versions = list(spreadsheet_odoo_versions.keys())
 
     if arguments["-s"]:
         set_verbose(False)
+
+    # command handling
+    if arguments["--version"]:
+        print(f"Version {arguments['version']}")
+        exit(0)
 
     if arguments["list-pr"]:
         list_pr(config)
         exit(0)
 
     if arguments["update"]:
-        update(config)
+        update(config, targetted_versions)
         exit(0)
 
     if arguments["push"]:
@@ -77,7 +98,7 @@ def main():
         exit(0)
 
     if arguments["release"]:
-        release(config)
+        release(config, targetted_versions)
         exit(0)
 
     if arguments["build"]:

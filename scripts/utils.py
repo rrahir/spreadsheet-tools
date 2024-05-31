@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import time
+from functools import partial
 
 from typing import List
 from const import USER_HOME
@@ -145,3 +146,13 @@ def retry_cmd(cmd_args: List[str], nbr_retry: int):
                 raise e
         break
     return result
+
+def cmd_wrap(verbose):
+    if verbose:
+        return subprocess.check_output
+    else:
+        return partial(
+            subprocess.check_output,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT
+        )

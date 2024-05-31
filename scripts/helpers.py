@@ -229,9 +229,8 @@ def make_PR(path, version, **kwargs) -> str:
         return url
 
 
-def fetch_repositories(config, spreadsheet_only=False):
+def fetch_repositories(config, versions, spreadsheet_only=False):
     spreadsheet_path = config["spreadsheet"]["repo_path"]
-    versions = [k for k in spreadsheet_odoo_versions.keys()]
 
     print("fetching o-spreadsheet ...")
     with pushd(spreadsheet_path):

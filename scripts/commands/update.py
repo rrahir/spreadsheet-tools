@@ -21,17 +21,19 @@ from helpers import (
 )
 from contributors import CONTRIBUTORS
 
-def update(config: configparser.ConfigParser):
+def update(config: configparser.ConfigParser, versions: list[str]):
     print("\n=== UPDATE ODOO ===\nThis may take a while ;-)\n")
     spreadsheet_path = config["spreadsheet"]["repo_path"]
-    fetch_repositories(config)
+    fetch_repositories(config, versions)
     old_prs = []
     new_prs = []
     existing_prs = get_odoo_prs(config)
     today = date.today()
     d = f"{str(today.day).zfill(2)}{str(today.month).zfill(2)}"
     h = str(uuid4())[:4]
-    for [repo, version, rel_path] in spreadsheet_odoo_versions.values():
+
+    for version in versions:
+        [repo, version, rel_path] = spreadsheet_odoo_versions[version]
         text = f"Processing version {version}"
         print(text)
         print("=" * len(text))
