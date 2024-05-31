@@ -19,7 +19,7 @@ from helpers import (
     print_msg,
     commit_message
 )
-
+from contributors import CONTRIBUTORS
 
 def update(config: configparser.ConfigParser):
     print("\n=== UPDATE ODOO ===\nThis may take a while ;-)\n")
@@ -92,6 +92,9 @@ def update(config: configparser.ConfigParser):
                     f"Branch {version} is up-to-date on odoo/{repo}. Skipping...\n"
                 )
                 continue
+            
+            # Add contributors
+            body  = body + "\n\n\n" + ("\n").join([ ("Co-authored-by: " + contributor) for contributor in CONTRIBUTORS ])
 
             commit_title = odoo_commit_title(rel_path, version)
             message = commit_message(commit_title, body)
