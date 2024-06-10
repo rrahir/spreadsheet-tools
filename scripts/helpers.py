@@ -220,7 +220,7 @@ def make_PR(path, version, **kwargs) -> str:
 
         if stop:
             retry_cmd(
-                ["gh", "pr", "comment", url, "--body", "fw-bot ignore"], 3
+                ["gh", "pr", "comment", url, "--body", "robodoo ignore"], 3
             )
         if autoCommit:
             retry_cmd(
