@@ -27,12 +27,15 @@ def main():
     =================
 
     Usage:
-        sp_tool release [-s] [-t | -e] [TARGET...]
-        sp_tool update [-s] [-t | -e] [TARGET...]
-        sp_tool build [-s]
-        sp_tool push [-l -f -s]
-        sp_tool list-pr
-        sp_tool process
+        sp_tool release [-s] [-t | -e] [TARGET...] - creates a new release of o_spreadsheet and pushes to odoo/o-spreadsheet repo
+        sp_tool update [-s] [-t | -e] [TARGET...]  - after all the PR created with sp_tool release are merged in spreadsheet,
+                                                     creates a new release of o_spreadsheet for all versions of Odoo and
+                                                     pushes to odoo dev repo. Also creates a PR for each version and self r+ them.
+        sp_tool build [-s]                         - builds o_spreadsheet, checkout the corresponding odoo local branch and copy the source
+                                                     files locally (no commit, no new branch)
+        sp_tool push [-l -f -s]                    - idem build, except checkouts a branch on odoo with the same name and pushes to remote dev
+        sp_tool list-pr                            - uses gh to find the list of Open PR about updating o_spreadsheet
+        sp_tool process                            - shows the workflow readme file
         sp_tool -h | --help | --version
 
     Options:
