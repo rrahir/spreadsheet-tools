@@ -26,7 +26,6 @@ spreadsheet_odoo_versions = {
     ],
     "16.0": ["odoo", "16.0", "addons/spreadsheet/static/src/o_spreadsheet/"],
     "17.0": ["odoo", "17.0", "addons/spreadsheet/static/src/o_spreadsheet/"],
-    "saas-17.1": ["odoo", "saas-17.1", "addons/spreadsheet/static/src/o_spreadsheet/"],
     "saas-17.2": ["odoo", "saas-17.2", "addons/spreadsheet/static/src/o_spreadsheet/"],
     "saas-17.4": ["odoo", "saas-17.4", "addons/spreadsheet/static/src/o_spreadsheet/"],
     "master": ["odoo", "master", "addons/spreadsheet/static/src/o_spreadsheet/"],
