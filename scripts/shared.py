@@ -23,13 +23,14 @@ spreadsheet_odoo_versions = {
         "enterprise",
         "15.0",
         "documents_spreadsheet/static/src/js/o_spreadsheet/",
+        "o_spreadsheet.js",
     ],
-    "16.0": ["odoo", "16.0", "addons/spreadsheet/static/src/o_spreadsheet/"],
-    "17.0": ["odoo", "17.0", "addons/spreadsheet/static/src/o_spreadsheet/"],
-    "saas-17.2": ["odoo", "saas-17.2", "addons/spreadsheet/static/src/o_spreadsheet/"],
-    "saas-17.4": ["odoo", "saas-17.4", "addons/spreadsheet/static/src/o_spreadsheet/"],
-    "18.0": ["odoo", "18.0", "addons/spreadsheet/static/src/o_spreadsheet/"],
-    "master": ["odoo", "master", "addons/spreadsheet/static/src/o_spreadsheet/"],
+    "16.0": ["odoo", "16.0", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.js"],
+    "17.0": ["odoo", "17.0", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.js"],
+    "saas-17.2": ["odoo", "saas-17.2", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.js"],
+    "saas-17.4": ["odoo", "saas-17.4", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.js"],
+    "18.0": ["odoo", "18.0", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.js"],
+    "master": ["odoo", "master", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js"],
 }
 
 REPOS = ["enterprise", "spreadsheet", "odoo"]

@@ -197,18 +197,20 @@ def run_build(config: configparser.ConfigParser):
             exit(1)
 
 
-def copy_build(config: configparser.ConfigParser, destination_path: str):
+def copy_build(config: configparser.ConfigParser, lib_file_name: str, destination_path: str):
     with pushd(os.path.join(config["spreadsheet"]["repo_path"], "build")):
         print("Copying build...")
         # find files
-        for file in ["o_spreadsheet.js", "o_spreadsheet.xml"]:
+        for file in [lib_file_name, "o_spreadsheet.xml"]:
             if os.path.isfile(file):
                 shutil.copy(file, destination_path)
+        shutil.move(f"{destination_path}/{lib_file_name}",
+                    f"{destination_path}/o_spreadsheet.js")
 
 
 def make_PR(path, version, **kwargs) -> str:
     stop = kwargs.get("stop", True)
-    #this can only be used with proper clearance
+    # this can only be used with proper clearance
     autoCommit = kwargs.get("auto", False)
     print("making PR", version, path)
     with pushd(path):

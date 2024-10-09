@@ -21,6 +21,7 @@ from helpers import (
 )
 from contributors import CONTRIBUTORS
 
+
 def update(config: configparser.ConfigParser, versions: list[str]):
     print("\n=== UPDATE ODOO ===\nThis may take a while ;-)\n")
     spreadsheet_path = config["spreadsheet"]["repo_path"]
@@ -33,7 +34,7 @@ def update(config: configparser.ConfigParser, versions: list[str]):
     h = str(uuid4())[:4]
 
     for version in versions:
-        [repo, version, rel_path] = spreadsheet_odoo_versions[version]
+        [repo, version, rel_path, lib_file_name] = spreadsheet_odoo_versions[version]
         text = f"Processing version {version}"
         print(text)
         print("=" * len(text))
@@ -94,16 +95,18 @@ def update(config: configparser.ConfigParser, versions: list[str]):
                     f"Branch {version} is up-to-date on odoo/{repo}. Skipping...\n"
                 )
                 continue
-            
+
             # Add contributors
-            body  = body + "\n\n\n" + ("\n").join([ ("Co-authored-by: " + contributor) for contributor in CONTRIBUTORS ])
+            body = body + "\n\n\n" + \
+                ("\n").join([("Co-authored-by: " + contributor)
+                             for contributor in CONTRIBUTORS])
 
             commit_title = odoo_commit_title(rel_path, version)
             message = commit_message(commit_title, body)
             checkout(repo_path, o_branch)
             # build & cp build
             run_build(config)
-            copy_build(config, full_path)
+            copy_build(config, lib_file_name, full_path)
             # commit
             subprocess.check_output(["git", "commit", "-am", message])
             cmd = [
@@ -128,7 +131,8 @@ def update(config: configparser.ConfigParser, versions: list[str]):
         print("\nNewly created PRs:")
         print(
             "\n".join([f"\t{version} - <{url}>" for [version, url] in new_prs]))
-        print(f"Runbot builds: <https://runbot.odoo.com/?search=spreadsheet-{d}-{h}-BI>")
+        print(
+            f"Runbot builds: <https://runbot.odoo.com/?search=spreadsheet-{d}-{h}-BI>")
     if not (old_prs or new_prs):
         print("Every versions are up-to-date")
 

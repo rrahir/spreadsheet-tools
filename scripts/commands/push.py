@@ -29,7 +29,8 @@ def push(config: configparser.ConfigParser, local=False, forceBuild=False):
                 print("Exiting the script...")
                 exit(1)
     spreadsheet_branch = get_spreadsheet_branch(config)
-    [repo, version, rel_path] = get_version_info(spreadsheet_branch)
+    [repo, version, rel_path, lib_file_name] = get_version_info(
+        spreadsheet_branch)
     repo_path = config[repo]["repo_path"]
 
     full_path = os.path.join(repo_path, rel_path)
@@ -43,11 +44,12 @@ def push(config: configparser.ConfigParser, local=False, forceBuild=False):
             f"The branch {spreadsheet_branch} does not contain any new commits."
         )
 
-    title = forceBuild and odoo_commit_title(rel_path, version) or "wip o-spreadsheet lib update"
+    title = forceBuild and odoo_commit_title(
+        rel_path, version) or "wip o-spreadsheet lib update"
     message = commit_message(title, body)
     checkout(repo_path, spreadsheet_branch)
     run_build(config)
-    copy_build(config, full_path)
+    copy_build(config, lib_file_name, full_path)
     with pushd(repo_path):
         subprocess.check_output(["git", "commit", "-am", message])
         if not local:
