@@ -19,7 +19,6 @@ def get_verbose() -> bool:
 # { branch prefix (stable release): [version, filepath in enterprise]}
 # TODO: find another way to get the version to ordinate them
 spreadsheet_odoo_versions = {
-
     "16.0": ["odoo", "16.0", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.js"],
     "17.0": ["odoo", "17.0", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.js"],
     "saas-17.2": ["odoo", "saas-17.2", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.js"],
