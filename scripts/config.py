@@ -1,4 +1,5 @@
 import os
+import sys
 import configparser
 import subprocess
 from const import CONFIG_FILE_PATH
@@ -13,18 +14,21 @@ from shutil import which
 CONFIG_KEYS = ["enterprise", "spreadsheet", "odoo"]
 
 
-def get_config() -> configparser.ConfigParser:
-    if os.path.isfile(CONFIG_FILE_PATH):
+def get_config(path: str) -> configparser.ConfigParser:
+    path = path or CONFIG_FILE_PATH
+    if os.path.isfile(path):
         config = configparser.ConfigParser()
-        config.read(CONFIG_FILE_PATH)
+        config.read(path)
 
         if not all([key in config for key in CONFIG_KEYS]):
             raise Exception(
-                f"Your config file is corrupted. Please fix it or delete it.\nPath: {CONFIG_FILE_PATH}"
+                f"Your config file is corrupted. Please fix it or delete it.\nPath: {path}"
             )
         return config
-    else:
+    elif path == CONFIG_FILE_PATH:
         return create_config()
+    else:
+        sys.exit(f"Config file not found at path: {path}")
 
 
 def check_gh():
