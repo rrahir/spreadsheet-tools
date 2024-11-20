@@ -16,9 +16,9 @@ from config import get_config
 pp = pprint.PrettyPrinter(depth=30)
 
 
-def loader() -> dict:
+def loader(path) -> dict:
     check_versions()
-    return {"config": get_config()}
+    return {"config": get_config(path)}
 
 
 def main():
@@ -27,21 +27,22 @@ def main():
     =================
 
     Usage:
-        sp_tool release [-s] [-t | -e] [TARGET...]
-        sp_tool update [-s] [-t | -e] [TARGET...]
-        sp_tool build [-s]
-        sp_tool push [-l -f -s]
-        sp_tool list-pr
-        sp_tool process
+        sp_tool release [-s] [-t | -e] [TARGET...] [--config <path>]
+        sp_tool update [-s] [-t | -e] [TARGET...] [--config <path>]
+        sp_tool build [-s] [--config <path>]
+        sp_tool push [-l -f -s] [--config <path>]
+        sp_tool list-pr [--config <path>]
+        sp_tool process [--config <path>]
         sp_tool -h | --help | --version
 
     Options:
-        -h --help   Show this screen
-        --version   Show version
-        -l          commit locally (don't push on remote)
-        -s          silent mode
-        -t          include branches
-        -e          exclude branches
+        -h --help        Show this screen
+        --version        Show version
+        --config <path>  Path to a config file in format .ini [default: ~/.spConfig.ini]
+        -l               commit locally (don't push on remote)
+        -s               silent mode
+        -t               include branches
+        -e               exclude branches
 
 
 
@@ -57,8 +58,11 @@ def main():
 
     """
     arguments = docopt(main.__doc__, version="0.1.1", options_first=False)
+
     # LOADER
-    config = loader()["config"]
+    config_file_path = os.path.expanduser(arguments["--config"])
+    config = loader(config_file_path)["config"]
+
     # pre-process
     if arguments["-t"] and arguments["-e"]:
         sys.exit("Arguments -t and -e are mutually exclusive. Make a choice ;-)")
