@@ -7,3 +7,4 @@ dist/
 logs/
 __pycache__
 debug.log
+.DS_Store
