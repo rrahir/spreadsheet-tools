@@ -8,7 +8,7 @@ import webbrowser
 
 from docopt import docopt
 
-from commands import list_pr, update, push, release, build
+from commands import list_pr, update, push, release, build, create_pr
 from shared import set_verbose, spreadsheet_odoo_versions
 from versions import check_versions
 from config import get_config
@@ -33,6 +33,7 @@ def main():
         sp_tool push [-l -f -s] [--config <path>]
         sp_tool list-pr [--config <path>]
         sp_tool process [--config <path>]
+        sp_tool create-pr [--config <path>]
         sp_tool -h | --help | --version
 
     Options:
@@ -91,6 +92,10 @@ def main():
 
     if arguments["list-pr"]:
         list_pr(config)
+        exit(0)
+        
+    if arguments["create-pr"]:
+        create_pr(config)
         exit(0)
 
     if arguments["update"]:
