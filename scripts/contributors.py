@@ -5,6 +5,7 @@ CONTRIBUTORS = [
     "Dhrutik Patel (dhrp) <dhrp@odoo.com>",
     "Adrien Minne (adrm) <adrm@odoo.com>",
     "Mehdi Rachico (mera) <mera@odoo.com>",
+    "Florian Damhaut (flda) <flda@odoo.com>",
     "Rémi Rahir (rar) <rar@odoo.com>",
     "Pierre Rousseau (pro) <pro@odoo.com>",
     "Vincent Schippefilt (vsc) <vsc@odoo.com>",
