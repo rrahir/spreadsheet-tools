@@ -33,7 +33,7 @@ def checkout(exec_path, branch, force=False):
                     )
             subprocess.check_output(["git", "checkout", branch])
         except subprocess.CalledProcessError as e:
-            [_, version, _, _] = get_version_info(branch)
+            [_, version, _, _, _] = get_version_info(branch)
             is_verbose and print(
                 "Branch not found.\nCreating new local branch..."
             )
@@ -197,11 +197,15 @@ def run_build(config: configparser.ConfigParser):
             exit(1)
 
 
-def copy_build(config: configparser.ConfigParser, lib_file_name: str, destination_path: str):
+def copy_build(config: configparser.ConfigParser, lib_file_name: str, destination_path: str, with_css: bool):
     with pushd(os.path.join(config["spreadsheet"]["repo_path"], "build")):
         print("Copying build...")
         # find files
-        for file in [lib_file_name, "o_spreadsheet.xml"]:
+        files = [lib_file_name, "o_spreadsheet.xml"]
+        if (with_css):
+            files.append("o_spreadsheet_variables.scss")
+            files.append("o_spreadsheet.scss")
+        for file in files:
             if os.path.isfile(file):
                 shutil.copy(file, destination_path)
         shutil.move(f"{destination_path}/{lib_file_name}",
