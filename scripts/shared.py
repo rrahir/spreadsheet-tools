@@ -21,7 +21,7 @@ def get_verbose() -> bool:
 spreadsheet_odoo_versions = {
     "16.0": ["odoo", "16.0", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.js", False],
     "17.0": ["odoo", "17.0", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.js", False],
-    "saas-17.2": ["odoo", "saas-17.2", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.js", False],
+    # "saas-17.2": ["odoo", "saas-17.2", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.js", False],
     "saas-17.4": ["odoo", "saas-17.4", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.js", False],
     "18.0": ["odoo", "18.0", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.js", False],
     "saas-18.1": ["odoo", "saas-18.1", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js", False],
