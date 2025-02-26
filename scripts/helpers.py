@@ -129,7 +129,7 @@ def get_commits(path, old, new):
             "git",
             "log",
             f"{old}..{new}",
-            "--pretty=format:https://github.com/odoo/o-spreadsheet/commit/%h %s %(trailers:key=Task,separator=%20)",
+            "--pretty=format:https://github.com/odoo/o-spreadsheet/commit/%h %s [%(trailers:key=Task,separator=%20)](https://www.odoo.com/odoo/2328/tasks/%(trailers:key=Task,separator=%20,valueonly))",
         ]
 
         commits = subprocess.check_output(cmd).decode("utf-8")
