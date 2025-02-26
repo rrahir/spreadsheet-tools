@@ -62,11 +62,8 @@ def release(config: configparser.ConfigParser, versions: list[str]):
             ]
 
             hash = subprocess.check_output(cmd).decode("utf-8")
-            body = get_commits(
-                spreadsheet_path,
-                hash,
-                version,
-            )
+            body = get_commits(spreadsheet_path,hash,version)
+            
             if not body:
                 print_msg(
                     f"No new commits for version {version}. Skipping release...\n", "WARNING"
