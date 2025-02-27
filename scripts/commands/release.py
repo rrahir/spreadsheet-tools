@@ -17,12 +17,14 @@ from helpers import (
     reset,
     spreadsheet_release_title,
     commit_message,
-    print_msg
+    print_msg,
+    check_remote_alignment
 )
 from utils import pushd
 
 
 def release(config: configparser.ConfigParser, versions: list[str]):
+    check_remote_alignment()
     # todo
     print("\n=== RELEASE O-SPREADSHEET ===\nThis may take a while ;-)\n")
     spreadsheet_path = config["spreadsheet"]["repo_path"]
