@@ -10,19 +10,20 @@ from helpers import (
     get_commits,
     copy_build,
     odoo_commit_title,
-    enterprise_commit_title,
     fetch_repositories,
     get_odoo_prs,
     make_PR,
     reset,
     run_build,
     print_msg,
-    commit_message
+    commit_message,
+    check_remote_alignment
 )
 from contributors import CONTRIBUTORS
 
 
 def update(config: configparser.ConfigParser, versions: list[str]):
+    check_remote_alignment()
     print("\n=== UPDATE ODOO ===\nThis may take a while ;-)\n")
     spreadsheet_path = config["spreadsheet"]["repo_path"]
     fetch_repositories(config, versions)

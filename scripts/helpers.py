@@ -284,3 +284,12 @@ def print_msg(text: str, level=False):
 
 def commit_message(title: str, body: str) -> str:
     return f"{title}\n\n{body}"
+
+
+def check_remote_alignment():
+    subprocess.check_output(["git", "remote", "update"])
+    remote_commit = subprocess.check_output(["git", "rev-parse", "@{u}"],text=True).rstrip("\n")
+    local_commit = subprocess.check_output(["git", "rev-parse", "@"],text=True).rstrip("\n")
+    if (remote_commit != local_commit):
+        print_msg("Your local branch is not aligned with the remote branch. Please pull the remote branch before continuing", "FAIL")
+        exit(1)
