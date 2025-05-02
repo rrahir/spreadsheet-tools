@@ -5,6 +5,7 @@ import os
 import shutil
 import pprint
 import json
+import pathlib
 
 from shared import spreadsheet_odoo_versions
 from const import DIFF_VALID_PATH
@@ -287,9 +288,22 @@ def commit_message(title: str, body: str) -> str:
 
 
 def check_remote_alignment():
-    subprocess.check_output(["git", "remote", "update"])
-    remote_commit = subprocess.check_output(["git", "rev-parse", "@{u}"],text=True).rstrip("\n")
-    local_commit = subprocess.check_output(["git", "rev-parse", "@"],text=True).rstrip("\n")
-    if (remote_commit != local_commit):
-        print_msg("Your local branch is not aligned with the remote branch. Please pull the remote branch before continuing", "FAIL")
-        exit(1)
+    root_dir = pathlib.Path(__file__).parent.parent
+    
+    with pushd(root_dir):
+        subprocess.check_output(["git", "remote", "update"])
+        ###
+        # Check if the current branch was rebased on the remote master
+        ###
+        branch_name = subprocess.check_output(
+            [
+                "git", "branch",
+                subprocess.check_output(["git", "symbolic-ref", "--short", "HEAD"], text=True).strip(), # current branch name 
+                "--contains",
+                subprocess.check_output(["git", "rev-parse", "refs/heads/master"], text=True).strip() # remote master HEAD
+            ],
+            text=True
+        ).strip()
+        if (not branch_name):
+            print_msg("Your local branch is not aligned with the remote branch master. Please pull the remote branch before continuing", "FAIL")
+            exit(1)
