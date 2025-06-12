@@ -76,7 +76,7 @@ def release(config: configparser.ConfigParser, versions: list[str]):
             message = commit_message(spreadsheet_release_title(tag), body + "\n\nTask: 0")
 
             # commit
-            release_branch = f"{tag}-release-{d}-{h}-BI"
+            release_branch = f"{version}-{tag}-release-{d}-{h}-BI"
 
             subprocess.check_output(["git", "checkout", "-b", release_branch])
             subprocess.check_output(["git", "commit", "-am", message])
