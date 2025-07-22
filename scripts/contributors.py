@@ -4,7 +4,7 @@ CONTRIBUTORS = [
     "Lucas Lefèvre (lul) <lul@odoo.com>",
     "Dhrutik Patel (dhrp) <dhrp@odoo.com>",
     "Adrien Minne (adrm) <adrm@odoo.com>",
-    "Mehdi Rachico (mera) <mera@odoo.com>",
+    "Ronak Mukeshbhai Bharadiya <rmbh@odoo.com>",
     "Florian Damhaut (flda) <flda@odoo.com>",
     "Rémi Rahir (rar) <rar@odoo.com>",
     "Pierre Rousseau (pro) <pro@odoo.com>",
