@@ -19,7 +19,7 @@ for (const script of Object.values(scripts)) {
             const result = {}
             const dashboards = await env.services.orm.call("spreadsheet.dashboard", "get_dashboard_files");
             for (const [file, data] of Object.entries(dashboards)) {
-                result[file] = script.execute(env, data);
+                result[file] = script.execute(env, data, file);
             }
             await env.services.orm.call("spreadsheet.dashboard", "write_dashboard_files", [result]);
         }
