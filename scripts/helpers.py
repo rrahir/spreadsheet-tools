@@ -198,14 +198,19 @@ def run_build(config: configparser.ConfigParser):
             exit(1)
 
 
-def copy_build(config: configparser.ConfigParser, lib_file_name: str, destination_path: str, with_css: bool):
+def copy_build(config: configparser.ConfigParser, lib_file_name: str, destination_path: str, stylesheet: str = "NO"):
+    if stylesheet not in ["NO", "SCSS", "CSS"]:
+        print_msg("Wrong stylesheet option", "FAIL")
+        exit(1)
     with pushd(os.path.join(config["spreadsheet"]["repo_path"], "build")):
         print("Copying build...")
         # find files
         files = [lib_file_name, "o_spreadsheet.xml"]
-        if (with_css):
+        if (stylesheet == "SCSS"):
             files.append("o_spreadsheet_variables.scss")
             files.append("o_spreadsheet.scss")
+        if (stylesheet == "CSS"):
+            files.append("o_spreadsheet.css")
         for file in files:
             if os.path.isfile(file):
                 shutil.copy(file, destination_path)
