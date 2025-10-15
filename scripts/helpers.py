@@ -1,5 +1,6 @@
 import subprocess
 import configparser
+import re
 import sys
 import os
 import shutil
@@ -216,6 +217,67 @@ def copy_build(config: configparser.ConfigParser, lib_file_name: str, destinatio
                 shutil.copy(file, destination_path)
         shutil.move(f"{destination_path}/{lib_file_name}",
                     f"{destination_path}/o_spreadsheet.js")
+        if lib_file_name.endswith(".esm.js"):
+            transpile_esm_to_odoo_define(f"{destination_path}/o_spreadsheet.js")
+
+
+def transpile_esm_to_odoo_define(path):
+    with open(path, "r") as f:
+        content = f.read()
+
+    content = convert_owl_imports(content)
+    content = convert_object_export(content)
+    index = content.index("*/")+2
+    content = LEADING_COMMENTS + content[:index] + ODOO_DEFINE_OPEN + content[index:] + ODOO_DEFINE_CLOSE
+
+    with open(path, "w") as f:
+        f.write(content)
+
+LEADING_COMMENTS ="""// @odoo-module ignore
+// Transpiled AOT with https://github.com/rrahir/spreadsheet-tools"""
+
+ODOO_DEFINE_OPEN = """
+odoo.define('@spreadsheet/o_spreadsheet/o_spreadsheet', ['@odoo/owl'], function (require) {
+'use strict';
+let __exports = {};"""
+
+ODOO_DEFINE_CLOSE = "return __exports;\n});"
+
+
+EXPORT_OBJECT_RE = re.compile(r"""
+    export\s*                           # export
+    (?P<object>{[\w$\s,]+})             # { a, b, c as x, ... }
+    """, re.MULTILINE | re.VERBOSE)
+
+
+def convert_object_export(content):
+    """
+    // before
+    export { a, b, c as x }
+    // after
+    Object.assign(__exports, { a, b, x: c })
+    """
+    def repl(matchobj):
+        object_process = "{" + ",".join([convert_as(val) for val in matchobj["object"][1:-1].split(",")]) + "}"
+        return f"Object.assign(__exports, {object_process})"
+    return EXPORT_OBJECT_RE.sub(repl, content)
+
+def convert_owl_imports(content):
+    """
+    // before
+    import { Component, useState } from '@odoo/owl';
+    // after
+    const { Component, useState } = require('@odoo/owl');
+    """
+    return re.sub(
+        r'import {([^}]+)} from ["\']@odoo/owl["\'];',
+        r"const {\1} = require('@odoo/owl');",
+        content,
+    )
+
+def convert_as(val):
+    parts = val.split(" as ")
+    return val if len(parts) < 2 else "%s: %s" % tuple(reversed(parts))
 
 
 def make_PR(path, version, **kwargs) -> str:
