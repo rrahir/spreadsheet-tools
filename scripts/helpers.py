@@ -241,7 +241,7 @@ odoo.define('@spreadsheet/o_spreadsheet/o_spreadsheet', ['@odoo/owl'], function 
 'use strict';
 let __exports = {};"""
 
-ODOO_DEFINE_CLOSE = "return __exports;\n});"
+ODOO_DEFINE_CLOSE = "return __exports;\n});\n"
 
 
 EXPORT_OBJECT_RE = re.compile(r"""
