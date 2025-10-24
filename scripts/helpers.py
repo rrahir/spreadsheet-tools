@@ -221,6 +221,19 @@ def copy_build(config: configparser.ConfigParser, lib_file_name: str, destinatio
         if lib_file_name.endswith(".esm.js"):
             transpile_esm_to_odoo_define(f"{destination_path}/o_spreadsheet.js")
 
+def run_benchmark():
+    root_path = os.path.split(os.path.dirname(os.path.abspath(__file__)))[0]
+    with pushd(os.path.join(root_path, "benchmark")):
+        try:
+            # TODO un jour faire un truc propre pour printer en étape
+            result = subprocess.check_output(["node",  "--expose-gc", "start", "benchmark_worker.js"]).decode(
+                "utf-8"
+            )
+        except Exception as e:
+            pp.pprint(e.cmd)
+            pp.pprint(e.returncode)
+            exit(1)
+        print(result)
 
 def transpile_esm_to_odoo_define(path):
     with open(path, "r") as f:
