@@ -1,4 +1,4 @@
-# Will build o_spreasheet, checkout thecorresponding odoo local branch and copy the build
+# Will build o_spreasheet, checkout the corresponding odoo local branch and copy the build
 # No commit
 # no new branch
 import os
