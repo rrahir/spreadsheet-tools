@@ -1,5 +1,6 @@
 /**
- * Child process script to run the benchmark and measure timings.
+ * Child process script for running the benchmarked code in isolation.
+ * Loads and executes the user-provided benchmark_target.js, measures execution time,
  */
 import { main, setup } from "./benchmark_target.js";
 import { buildPath } from "./utils.js";

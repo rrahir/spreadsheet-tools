@@ -1,5 +1,9 @@
-// main.js
-// Orchestrates benchmarking: switches branches, spawns runner.js, aggregates timings, prints report
+
+/**
+ * Main entry point for the benchmarking framework.
+ * Orchestrates the benchmarking process: switches branches, spawns worker processes,
+ * collects timing data, analyzes results, and prints a formatted report.
+ */
 
 import { fork } from "child_process";
 import { checkoutBranch } from "./utils.js";
@@ -98,12 +102,11 @@ function stddev(arr) {
 
     // --- Printing function ---
     function printEventAnalysis(analysis, branches) {
-        console.log("\nEvent timings:");
         const maxBranchLen = Math.max(...branches.map(b => b.length));
         const green = "\x1b[32m";
         const reset = "\x1b[0m";
         for (const { event, branchStats } of analysis) {
-            console.log(`\nEvent: ${event}`);
+            console.log(`\n${event}`);
             for (const stat of branchStats) {
                 const branchLabel = `${stat.branch}:`.padEnd(maxBranchLen + 3, ' ');
                 const meanStr = stat.isBest ? `${green}${stat.mean.toFixed(2)} ms${reset}` : `${stat.mean.toFixed(2)} ms`;
