@@ -8,28 +8,36 @@
 import { fork } from "child_process";
 import { checkoutBranch } from "./utils.js";
 import { branches, runsPerBranch } from "./benchmark_target.js";
+import path from "path";
+import { fileURLToPath } from "url";
 
 async function runBenchmark(branch) {
     checkoutBranch(branch);
-    const timings = [];
     const eventTimingsArr = [];
+    const workerPath = getWorkerPath();
+
     for (let i = 0; i < runsPerBranch; i++) {
-        const result = await runChild();
-        timings.push(result.durationMs);
+        const result = await runChild(workerPath);
         eventTimingsArr.push(result.eventTimings);
     }
-    return { timings, eventTimingsArr };
+    return { eventTimingsArr };
 }
 
-function runChild() {
+function runChild(workerPath) {
     return new Promise((resolve, reject) => {
-        const child = fork("./benchmark_worker.js");
+    const child = fork(workerPath);
         child.on("message", resolve);
         child.on("error", reject);
         child.on("exit", (code) => {
             if (code !== 0) reject(new Error("Child exited with code " + code));
         });
     });
+}
+
+function getWorkerPath() {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    return path.resolve(__dirname, "./benchmark_worker.js");
 }
 
 function mean(arr) {
@@ -42,7 +50,7 @@ function stddev(arr) {
 }
 
 
-(async () => {
+export async function startBenchmarking() {
     const results = {};
     for (const branch of branches) {
         results[branch] = await runBenchmark(branch);
@@ -122,4 +130,4 @@ function stddev(arr) {
     // Run analysis and print
     const analysis = analyzeEventTimings(results, branches);
     printEventAnalysis(analysis, branches);
-})();
+};

@@ -20,7 +20,18 @@ async function runMeasured() {
     const end = performance.now();
     console.debug = origDebug;
     const durationMs = end - start;
-    // Parse logs for event timings
+    const eventTimings = parseEventTimings(logs);
+    // Add total time as a regular event called 'Global'
+    eventTimings["Global"] = durationMs;
+    process.send({ eventTimings });
+}
+
+/**
+ * Parses timing event logs and extracts event timings
+ * from logs of the form:
+ *   "evaluate all cells 83.20 ms"
+ */
+function parseEventTimings(logs) {
     const eventTimings = {};
     const timingRegex = /([\w .]+) (\d+(?:\.\d+)?) ms/;
     for (const line of logs) {
@@ -31,9 +42,7 @@ async function runMeasured() {
             eventTimings[event] = time;
         }
     }
-    // Add total time as a regular event called 'Global'
-    eventTimings["Global"] = durationMs;
-    process.send({ eventTimings });
+    return eventTimings;
 }
 
 runMeasured();

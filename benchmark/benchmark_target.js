@@ -8,8 +8,11 @@ import { makeLargeDataset } from "./dataset_factory.js";
 /**
  * Branches to compare.
  */
-export const branches = ["master", "master-before-perf-imp-lul"];
-export const runsPerBranch = 50;
+export const branches = [
+    "master",
+    "master-before-perf-imp-lul",
+];
+export const runsPerBranch = 10;
 
 /**
  * Setup function run before measurement begins.
