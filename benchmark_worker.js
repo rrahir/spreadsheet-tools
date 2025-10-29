@@ -1,8 +1,8 @@
-// runner.js
-// Runs run.js in a child process, measures execution time, and returns timing to parent
-
+/**
+ * Child process script to run the benchmark and measure timings.
+ */
 import { main, setup } from "./benchmark_target.js";
-import { buildPath } from "./perf_bench.js";
+import { buildPath } from "./utils.js";
 
 async function runMeasured() {
     const setupData = setup();

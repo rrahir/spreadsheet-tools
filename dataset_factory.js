@@ -1,5 +1,4 @@
 // Dataset generation functions for benchmarking
-import { _getColumnLetter } from "./bench_utils.js";
 
 function computeFormulaCells(cols, rows) {
     const cells = {};
@@ -139,4 +138,10 @@ export function makeLargeDataset(cols, rows, sheetsInfo = ["formulas"]) {
         sheets,
         borders: {},
     };
+}
+
+function _getColumnLetter(number) {
+    return number !== -1
+        ? _getColumnLetter(Math.floor(number / 26) - 1) + String.fromCharCode(65 + (number % 26))
+        : "";
 }

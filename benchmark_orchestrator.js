@@ -2,11 +2,8 @@
 // Orchestrates benchmarking: switches branches, spawns runner.js, aggregates timings, prints report
 
 import { fork } from "child_process";
-import { checkoutBranch } from "./perf_bench.js";
-import { mean, stddev, confidenceInterval } from "./bench_utils.js";
-
-const branches = ["master", "master-before-perf-imp-lul"];
-const runsPerBranch = 50;
+import { checkoutBranch } from "./utils.js";
+import { branches, runsPerBranch } from "./benchmark_target.js";
 
 async function runBenchmark(branch) {
     checkoutBranch(branch);
@@ -30,6 +27,16 @@ function runChild() {
         });
     });
 }
+
+function mean(arr) {
+    return arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+
+function stddev(arr) {
+    const m = mean(arr);
+    return Math.sqrt(arr.reduce((a, b) => a + (b - m) ** 2, 0) / (arr.length - 1));
+}
+
 
 (async () => {
     const results = {};

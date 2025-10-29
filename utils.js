@@ -1,12 +1,11 @@
-import { execSync, fork } from "child_process";
+import { execSync } from "child_process";
 import fs from "fs";
 import v8 from "v8";
 import path from "path";
-import { mean, stddev, confidenceInterval } from "./bench_utils.js";
 
 function saveHeapSnapshot(runNumber) {
-    GC();
     // Disabled for now, uncomment to enable heap snapshots
+    // GC();
     // const snapshotsDir = path.resolve("snapshots");
     // if (!fs.existsSync(snapshotsDir)) {
     //     fs.mkdirSync(snapshotsDir);
@@ -54,46 +53,3 @@ function getOdooSpreadsheetRepoPath() {
     }
     return repoPath;
 }
-
-// function printBenchmarkResults(branchA, meanA, ciA, branchB, meanB, ciB) {
-//     console.log("--- Benchmark Results ---");
-//     console.log(
-//         `Branch ${branchA}: mean = ${meanA.toFixed(3)} ms, 95% CI = [${ciA[0].toFixed(3)}, ${ciA[1].toFixed(3)}] ms`
-//     );
-//     console.log(
-//         `Branch ${branchB}: mean = ${meanB.toFixed(3)} ms, 95% CI = [${ciB[0].toFixed(3)}, ${ciB[1].toFixed(3)}] ms`
-//     );
-//     const diff = meanB - meanA;
-//     const percent = (diff / meanA) * 100;
-//     if (Math.abs(diff) < 1e-6) {
-//         console.log("No significant difference between branches.");
-//     } else if (diff < 0) {
-//         console.log(
-//             `Branch ${branchB} is faster by ${Math.abs(diff).toFixed(3)} ms (${Math.abs(percent).toFixed(2)}%) compared to ${branchA}.`
-//         );
-//     } else {
-//         console.log(
-//             `Branch ${branchB} is slower by ${diff.toFixed(3)} ms (${percent.toFixed(2)}%) compared to ${branchA}.`
-//         );
-//     }
-// }
-
-// // Example usage:
-// function setup() {
-//     return makeLargeDataset(26, 5000, ["formulas"]);
-// }
-
-// function targetFunction(Model, setupData) {
-//     const model = new Model(setupData);
-//     model.leaveSession();
-// }
-
-// // Uncomment and set branch names to use:
-// benchmarkOnBranches({
-//     fn: targetFunction,
-//     branchA: "master-style-circular-dependency-lul",
-//     branchB: "master-before-perf-imp-lul",
-//     iterations: 50,
-//     warmup: 3,
-//     setup,
-// });

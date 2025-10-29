@@ -3,6 +3,9 @@
 
 import { makeLargeDataset } from "./dataset_factory.js";
 
+export const branches = ["master", "master-before-perf-imp-lul"];
+export const runsPerBranch = 50;
+
 export function setup() {
     // Setup code before measurement
     // Return any data needed for the main function
