@@ -8,7 +8,7 @@ def list_pr(config: configparser.ConfigParser):
         print_msg("\nPending Odoo Community/Enterprise PRs:")
         print_msg(
             "\n".join(
-                [f"\t{version} - {url}" for [version, url] in PRs.items()]
+                [f"\t{version} - <{url}>" for [version, url] in PRs.items()]
             ))
     else:
         print_msg("\nThere are no open pull requests...", "WARNING")
