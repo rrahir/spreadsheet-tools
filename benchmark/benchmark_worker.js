@@ -6,11 +6,18 @@
 import { main, setup } from "./benchmark_target.js";
 import { buildPath } from "./utils.js";
 
+function gc() {
+    if (global.gc) {
+        global.gc();
+    } else {
+        console.warn("No GC hook! Start Node.js with --expose-gc to enable forced garbage collection.");
+    }
+}
+
 async function runMeasured() {
-    const setupData = setup();
-    // Use BENCHMARK_ENGINE_PATH from env if present
     const enginePath = process.env.BENCHMARK_ENGINE_PATH || buildPath();
     const engineModule = await import(enginePath);
+    const setupData = setup(engineModule);
     const logs = [];
     // Patch console.debug to collect logs
     const origDebug = console.debug;
@@ -18,6 +25,7 @@ async function runMeasured() {
         logs.push(args.map(String).join(" "));
         origDebug.apply(console, args);
     };
+    gc();
     const start = performance.now();
     await main(engineModule, setupData);
     const end = performance.now();
