@@ -5,28 +5,37 @@
  * collects timing data, analyzes results, and prints a formatted report.
  */
 
+
 import { fork } from "child_process";
-import { checkoutBranch } from "./utils.js";
+import { checkoutBranch, buildPath } from "./utils.js";
 import { branches, runsPerBranch } from "./benchmark_target.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
+import os from "os";
 
-async function runBenchmark(branch) {
-    checkoutBranch(branch);
-    const eventTimingsArr = [];
-    const workerPath = getWorkerPath();
 
-    for (let i = 0; i < runsPerBranch; i++) {
-        console.log(`Running benchmark for branch ${branch}, run ${i + 1}/${runsPerBranch}`);
-        const result = await runChild(workerPath);
-        eventTimingsArr.push(result.eventTimings);
+// Build all branches and copy their build files to temp dirs
+async function buildAllBranches() {
+    const tempDirs = {};
+    for (const branch of branches) {
+        checkoutBranch(branch);
+        const buildFile = buildPath();
+        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `benchmark_${branch}_`));
+        const destFile = path.join(tempDir, "o-spreadsheet-engine.esm.js");
+        fs.copyFileSync(buildFile, destFile);
+        tempDirs[branch] = { tempDir, buildFile: destFile };
+        console.log(`Built and copied for branch ${branch} to ${destFile}`);
     }
-    return { eventTimingsArr };
+    return tempDirs;
 }
 
-function runChild(workerPath) {
+
+function runChild(workerPath, buildFilePath) {
     return new Promise((resolve, reject) => {
-    const child = fork(workerPath);
+        const child = fork(workerPath, [], {
+            env: { ...process.env, BENCHMARK_ENGINE_PATH: buildFilePath },
+        });
         child.on("message", resolve);
         child.on("error", reject);
         child.on("exit", (code) => {
@@ -34,6 +43,7 @@ function runChild(workerPath) {
         });
     });
 }
+
 
 function getWorkerPath() {
     const __filename = fileURLToPath(import.meta.url);
@@ -51,10 +61,24 @@ function stddev(arr) {
 }
 
 
+
 export async function startBenchmarking() {
-    const results = {};
+    // Step 1: Build all branches and copy build files
+    const branchBuilds = await buildAllBranches();
+
+    // Step 2: Alternate runs between branches
+    const totalRuns = runsPerBranch * branches.length;
+    const eventTimingsArrByBranch = {};
     for (const branch of branches) {
-        results[branch] = await runBenchmark(branch);
+        eventTimingsArrByBranch[branch] = [];
+    }
+    const workerPath = getWorkerPath();
+    for (let i = 0; i < totalRuns; i++) {
+        const branch = branches[i % branches.length];
+        const buildFilePath = branchBuilds[branch].buildFile;
+        console.log(`Running benchmark for branch ${branch}, run ${Math.floor(i / branches.length) + 1}/${runsPerBranch}`);
+        const result = await runChild(workerPath, buildFilePath);
+        eventTimingsArrByBranch[branch].push(result.eventTimings);
     }
 
     // --- Analysis function ---
@@ -62,7 +86,7 @@ export async function startBenchmarking() {
         // Collect all event names
         const allEvents = new Set();
         for (const branch of branches) {
-            for (const eventObj of results[branch].eventTimingsArr) {
+            for (const eventObj of results[branch]) {
                 Object.keys(eventObj).forEach(e => allEvents.add(e));
             }
         }
@@ -73,7 +97,7 @@ export async function startBenchmarking() {
             const branchStats = [];
             // Find best mean for this event
             for (const branch of branches) {
-                const arr = results[branch].eventTimingsArr.map(obj => obj[event]).filter(v => v !== undefined);
+                const arr = results[branch].map(obj => obj[event]).filter(v => v !== undefined);
                 if (arr.length === 0) continue;
                 const m = mean(arr);
                 if (m < bestEventMean) {
@@ -84,7 +108,7 @@ export async function startBenchmarking() {
             if (bestEventMean < 5) continue; // Skip event if best mean < 5ms
             // Compute stats for each branch
             for (const branch of branches) {
-                const arr = results[branch].eventTimingsArr.map(obj => obj[event]).filter(v => v !== undefined);
+                const arr = results[branch].map(obj => obj[event]).filter(v => v !== undefined);
                 if (arr.length === 0) continue;
                 const m = mean(arr);
                 const sd = arr.length > 1 ? stddev(arr) : 0;
@@ -92,7 +116,7 @@ export async function startBenchmarking() {
                 if (branch === bestEventBranch && branches.length > 1) {
                     // Find the worst mean for this event
                     const otherMeans = branches.filter(b => b !== branch).map(b => {
-                        const arrOther = results[b].eventTimingsArr.map(obj => obj[event]).filter(v => v !== undefined);
+                        const arrOther = results[b].map(obj => obj[event]).filter(v => v !== undefined);
                         return arrOther.length ? mean(arrOther) : null;
                     }).filter(v => v !== null);
                     if (otherMeans.length) {
@@ -129,6 +153,6 @@ export async function startBenchmarking() {
     }
 
     // Run analysis and print
-    const analysis = analyzeEventTimings(results, branches);
+    const analysis = analyzeEventTimings(eventTimingsArrByBranch, branches);
     printEventAnalysis(analysis, branches);
-};
+}

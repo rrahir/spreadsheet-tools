@@ -2,12 +2,15 @@
  * Child process script for running the benchmarked code in isolation.
  * Loads and executes the user-provided benchmark_target.js, measures execution time,
  */
+
 import { main, setup } from "./benchmark_target.js";
 import { buildPath } from "./utils.js";
 
 async function runMeasured() {
     const setupData = setup();
-    const engineModule = await import(buildPath());
+    // Use BENCHMARK_ENGINE_PATH from env if present
+    const enginePath = process.env.BENCHMARK_ENGINE_PATH || buildPath();
+    const engineModule = await import(enginePath);
     const logs = [];
     // Patch console.debug to collect logs
     const origDebug = console.debug;
