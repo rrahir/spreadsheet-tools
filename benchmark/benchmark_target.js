@@ -10,16 +10,16 @@ import { makeLargeDataset } from "./dataset_factory.js";
  */
 export const branches = [
     "master",
-    "master-before-perf-imp-lul",
+    "master-range-tokenize-list-lul",
 ];
-export const runsPerBranch = 10;
+export const runsPerBranch = 50;
 
 /**
  * Setup function run before measurement begins.
  */
 export function setup() {
     // Return any data needed for the main function
-    return makeLargeDataset(26, 1000, ["formulas"]);
+    return makeLargeDataset(26, 5000, ["formulas"]);
 }
 
 /**

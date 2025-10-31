@@ -17,6 +17,7 @@ async function runBenchmark(branch) {
     const workerPath = getWorkerPath();
 
     for (let i = 0; i < runsPerBranch; i++) {
+        console.log(`Running benchmark for branch ${branch}, run ${i + 1}/${runsPerBranch}`);
         const result = await runChild(workerPath);
         eventTimingsArr.push(result.eventTimings);
     }
