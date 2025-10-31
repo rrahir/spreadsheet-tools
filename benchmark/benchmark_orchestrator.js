@@ -55,9 +55,15 @@ function mean(arr) {
     return arr.reduce((a, b) => a + b, 0) / arr.length;
 }
 
+
 function stddev(arr) {
     const m = mean(arr);
     return Math.sqrt(arr.reduce((a, b) => a + (b - m) ** 2, 0) / (arr.length - 1));
+}
+
+function stderr(arr) {
+    if (arr.length <= 1) return 0;
+    return stddev(arr) / Math.sqrt(arr.length);
 }
 
 
@@ -111,7 +117,7 @@ export async function startBenchmarking() {
                 const arr = results[branch].map(obj => obj[event]).filter(v => v !== undefined);
                 if (arr.length === 0) continue;
                 const m = mean(arr);
-                const sd = arr.length > 1 ? stddev(arr) : 0;
+                const se = arr.length > 1 ? stderr(arr) : 0;
                 let percent = null;
                 if (branch === bestEventBranch && branches.length > 1) {
                     // Find the worst mean for this event
@@ -126,7 +132,7 @@ export async function startBenchmarking() {
                         }
                     }
                 }
-                branchStats.push({ branch, mean: m, stddev: sd, n: arr.length, isBest: branch === bestEventBranch, percent });
+                branchStats.push({ branch, mean: m, stderr: se, n: arr.length, isBest: branch === bestEventBranch, percent });
             }
             analysis.push({ event, branchStats });
         }
@@ -147,7 +153,7 @@ export async function startBenchmarking() {
                 if (stat.isBest && stat.percent !== null) {
                     percentStr = ` ${green}(-${stat.percent.toFixed(0)}%)${reset}`;
                 }
-                console.log(`  ${branchLabel}Mean: ${meanStr}, Stddev: ${stat.stddev.toFixed(2)} ms, n=${stat.n}${percentStr}`);
+                console.log(`  ${branchLabel}Mean: ${meanStr}, StdErr: ${stat.stderr.toFixed(2)} ms, n=${stat.n}${percentStr}`);
             }
         }
     }
