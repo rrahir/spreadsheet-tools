@@ -356,18 +356,24 @@ def commit_message(title: str, body: str) -> str:
 
 def check_remote_alignment():
     root_dir = pathlib.Path(__file__).parent.parent
-    
+
     with pushd(root_dir):
         subprocess.check_output(["git", "remote", "update"])
         ###
         # Check if the current branch was rebased on the remote master
         ###
+
+        remote_name = subprocess.check_output(
+            ["git", "remote",],
+            text=True,
+        ).strip().splitlines()[0]  # assuming 'origin' is the first remote
+
         branch_name = subprocess.check_output(
             [
                 "git", "branch",
-                subprocess.check_output(["git", "symbolic-ref", "--short", "HEAD"], text=True).strip(), # current branch name 
                 "--contains",
-                subprocess.check_output(["git", "rev-parse", "refs/heads/master"], text=True).strip() # remote master HEAD
+                remote_name, # remote master HEAD hash
+                "master"
             ],
             text=True
         ).strip()
