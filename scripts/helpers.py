@@ -30,9 +30,10 @@ def checkout(exec_path, branch, force=False):
                         ["git", "reset", "--hard", "HEAD"]
                     ).decode("utf-8")
                 else:
-                    sys.exit(
-                        f"You have unstaged changes. Please fix it\nPath:\n{exec_path}\n\n{lingering_diff}"
-                    )
+                    print_msg("You have unstaged changes. Please fix it", "FAIL")
+                    print_msg(f"Path:\n{exec_path}\n\n{lingering_diff}\n")
+                    print_msg("You have unstaged changes. Please fix it!", "FAIL")
+                    sys.exit(1)
             subprocess.check_output(["git", "checkout", branch])
         except subprocess.CalledProcessError as e:
             [_, version, _, _, _] = get_version_info(branch)
