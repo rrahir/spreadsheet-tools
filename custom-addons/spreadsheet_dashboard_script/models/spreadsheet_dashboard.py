@@ -22,9 +22,23 @@ class SpreadsheetDashboard(models.Model):
         dashboard_modules = modules.filtered(lambda m: 'spreadsheet_dashboard' in m.dependencies_id.mapped('name'))
         for module in dashboard_modules:
             for path in self._get_data_filepaths(module.name):
-                for dashboard_file in self._parse_xml(path):
-                    with file_open(dashboard_file, mode='r') as f:
-                        result[dashboard_file] = json.load(f)
+                for files in self._parse_xml(path):
+                    for dashboard_file in [files["data"], files["sample"]]:
+                        with file_open(dashboard_file, mode='r') as f:
+                            result[dashboard_file] = json.load(f)
+        return result
+
+    @api.model
+    def get_dashboard_files_for_sample(self):
+        result = {}
+        modules = self.env['ir.module.module'].search([])
+        dashboard_modules = modules.filtered(lambda m: 'spreadsheet_dashboard' in m.dependencies_id.mapped('name'))
+        for module in dashboard_modules:
+            for path in self._get_data_filepaths(module.name):
+                files = self._parse_xml(path)
+                for r in files:
+                    with file_open(r["data"], mode='r') as f:
+                        result[r["sample"]] = json.load(f)
         return result
 
     @api.model
@@ -47,10 +61,18 @@ class SpreadsheetDashboard(models.Model):
                 tree = etree.fromstring('<data/>')
         files = []
         for node in tree.xpath("//record[@model='spreadsheet.dashboard']"):
+            data, sample = None, None
             for field_node in node.iterchildren():
                 field_name = field_node.get('name')
                 if field_name == 'spreadsheet_binary_data':
-                    files.append(field_node.get('file'))
+                    data = field_node.get('file')
                 elif field_name == 'sample_dashboard_file_path':
-                    files.append(field_node.text)
+                    sample = field_node.text
+            if data and sample:
+                files.append({
+                    "data": data,
+                    "sample": sample,
+                })
+            else:
+                raise ValueError(f"Invalid record in {filepath}: missing 'spreadsheet_binary_data' or 'sample_dashboard_file_path'")
         return files
