@@ -8,10 +8,11 @@ import { buildPath, gc } from "./utils.js";
 
 async function runMeasured() {
     const enginePath = process.env.BENCHMARK_ENGINE_PATH || buildPath();
+    const branch = process.env.BENCHMARK_BRANCH;
     const engineModule = await import(enginePath);
 	const origDebug = console.debug;
 	console.debug = (...args) => {}; 
-    const setupData = setup(engineModule);
+    const setupData = setup(engineModule, branch);
     const logs = [];
     // Patch console.debug to collect logs and avoid polluting the console
     console.debug = function(...args) {

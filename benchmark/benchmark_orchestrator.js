@@ -31,10 +31,10 @@ async function buildAllBranches() {
 }
 
 
-function runChild(workerPath, buildFilePath) {
+function runChild(workerPath, buildFilePath, branch) {
     return new Promise((resolve, reject) => {
         const child = fork(workerPath, [], {
-            env: { ...process.env, BENCHMARK_ENGINE_PATH: buildFilePath },
+            env: { ...process.env, BENCHMARK_ENGINE_PATH: buildFilePath, BENCHMARK_BRANCH: branch },
         });
         child.on("message", resolve);
         child.on("error", reject);
@@ -83,7 +83,7 @@ export async function startBenchmarking() {
         const branch = branches[i % branches.length];
         const buildFilePath = branchBuilds[branch].buildFile;
         console.log(`Running benchmark for branch ${branch}, run ${Math.floor(i / branches.length) + 1}/${runsPerBranch}`);
-        const result = await runChild(workerPath, buildFilePath);
+        const result = await runChild(workerPath, buildFilePath, branch);
         eventTimingsArrByBranch[branch].push(result.eventTimings);
     }
 
