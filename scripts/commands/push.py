@@ -45,7 +45,7 @@ def push(config: configparser.ConfigParser, local=False, forceBuild=False):
         )
 
     title = forceBuild and odoo_commit_title(
-        rel_path, version) or "wip o-spreadsheet lib update"
+        rel_path, version) or "[IMP] o-spreadsheet: wip lib update"
     message = commit_message(title, body)
     checkout(repo_path, spreadsheet_branch)
     run_build(config)
