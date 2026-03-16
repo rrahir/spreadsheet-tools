@@ -8,7 +8,7 @@ import webbrowser
 
 from docopt import docopt
 
-from commands import list_pr, update, push, release, build, benchmark
+from commands import list_pr, update, push, release, build, benchmark, gh_pages
 from shared import set_verbose, spreadsheet_odoo_versions
 from versions import check_versions
 from config import get_config
@@ -35,6 +35,7 @@ def main():
         sp_tool process [--config <path>]
         sp_tool -h | --help | --version
         sp_tool benchmark
+        sp_tool gh-pages
 
     Options:
         -h --help        Show this screen
@@ -57,7 +58,7 @@ def main():
     sp_tool list-pr     # uses gh to find the list of Open PR about updating o_spreadsheet
     sp_tool process     # shows the workflow readme file
     sp_tool benchmark   # start the benchmark tool
-
+    sp_tool gh-pages    # create a commit to update the gh-pages branch
     """
     arguments = docopt(main.__doc__, version="0.1.1", options_first=False)
 
@@ -125,6 +126,10 @@ def main():
 
     if arguments["benchmark"]:
         benchmark()
+        exit(0)
+    
+    if arguments["gh-pages"]:
+        gh_pages(config)
         exit(0)
 
 if __name__ == "__main__":
