@@ -4,3 +4,4 @@ from .list_pr import list_pr
 from .push import push
 from .update import update
 from .benchmark import benchmark
+from .gh_pages import gh_pages
