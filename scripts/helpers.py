@@ -242,7 +242,7 @@ def transpile_esm_to_odoo_define(path):
     content = convert_owl_imports(content)
     content = convert_object_export(content)
     index = content.index("*/")+2
-    content = LEADING_COMMENTS + content[:index] + ODOO_DEFINE_OPEN + content[index:] + ODOO_DEFINE_CLOSE
+    content = LEADING_COMMENTS + "\n" + content[:index] + ODOO_DEFINE_OPEN + content[index:] + ODOO_DEFINE_CLOSE
 
     with open(path, "w") as f:
         f.write(content)
@@ -255,7 +255,7 @@ odoo.define('@spreadsheet/o_spreadsheet/o_spreadsheet', ['@odoo/owl'], function 
 'use strict';
 let __exports = {};"""
 
-ODOO_DEFINE_CLOSE = "return __exports;\n});\n"
+ODOO_DEFINE_CLOSE = "\nreturn __exports;\n});\n"
 
 
 EXPORT_OBJECT_RE = re.compile(r"""
