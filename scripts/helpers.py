@@ -306,13 +306,15 @@ def make_PR(path, version, **kwargs) -> str:
         result = retry_cmd(["gh", "pr", "view", "--json", "url"], 3)
         url = json.loads(result.decode("utf-8"))["url"]
 
+        msg = []
         if stop:
-            retry_cmd(
-                ["gh", "pr", "comment", url, "--body", "robodoo fw=no"], 3
-            )
+            msg.append("robodoo fw=no")
         if autoCommit:
+            msg.append("robodoo r+")
+
+        if len(msg) > 0:
             retry_cmd(
-                ["gh", "pr", "comment", url, "--body", "robodoo r+"], 3
+                ["gh", "pr", "comment", url, "--body", "\n".join(msg)], 3
             )
         return url
 
