@@ -22,7 +22,7 @@ async function buildAllBranches() {
         checkoutBranch(branch);
         const buildFile = buildPath();
         const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `benchmark_${branch}_`));
-        const destFile = path.join(tempDir, "o-spreadsheet-engine.esm.js");
+        const destFile = path.join(tempDir, "o_spreadsheet.esm.js");
         fs.copyFileSync(buildFile, destFile);
         tempDirs[branch] = { tempDir, buildFile: destFile };
         console.log(`Built and copied for branch ${branch} to ${destFile}`);
