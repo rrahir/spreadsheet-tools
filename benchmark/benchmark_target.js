@@ -32,7 +32,10 @@ export function setup({ Model }, branch) {
  * The actual code to benchmark.
  * If you want to benchmark custom event, use `console.debug()` with the format `<EventName> <number> ms`
  */
-export async function benchmark({ Model }, { data, config = undefined, initialMessages = [] }) {
+export async function benchmark(
+  { Model },
+  { data, config = undefined, initialMessages = [] },
+) {
   const model = new Model(data, config, initialMessages);
   // Your code here
   model.leaveSession();

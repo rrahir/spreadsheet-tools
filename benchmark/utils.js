@@ -14,12 +14,11 @@ export function gc() {
 export function checkoutBranch(branch) {
     const oSpreadsheetPath = getOdooSpreadsheetRepoPath();
     execSync(`git checkout ${branch}`, { stdio: "inherit", cwd: oSpreadsheetPath });
-    // execSync("npm run build", { stdio: "inherit", cwd: oSpreadsheetPath });
-    execSync("npm run dist --workspaces", { stdio: "inherit", cwd: oSpreadsheetPath });
+    execSync("npm run perf", { stdio: "inherit", cwd: oSpreadsheetPath });
 }
 
 export function buildPath() {
-    return path.join(getOdooSpreadsheetRepoPath(), "dist", "o-spreadsheet-engine.esm.js");
+    return path.join(getOdooSpreadsheetRepoPath(), "dist", "o_spreadsheet.esm.js");
 }
 
 function getOdooSpreadsheetRepoPath() {
