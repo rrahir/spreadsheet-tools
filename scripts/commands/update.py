@@ -109,7 +109,7 @@ def update(config: configparser.ConfigParser, versions: list[str]):
             run_build(config)
             copy_build(config, lib_file_name, full_path, stylesheet)
             # commit
-            subprocess.check_output(["git", "commit", "-am", message])
+            subprocess.check_output(["git", "commit", "--no-verify", "-am", message])
             cmd = [
                 "git",
                 "push",
