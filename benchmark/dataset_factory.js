@@ -18,6 +18,15 @@ function computeFormulaCells(cols, rows) {
     return cells;
 }
 
+function computeChooseCol(cols) {
+    const cells = {};
+    for (let col = 0; col < cols; col++) {
+        const letter = _getColumnLetter(col);
+        cells[letter + "1"] = `=CHOOSECOLS(MUNIT(${col}), ${Math.ceil(col / 2)})`;
+    }
+    return cells;
+}
+
 function computeArrayFormulaCells(cols, rows) {
     const cells = {};
     const initRow = 4;
@@ -121,6 +130,9 @@ export function makeLargeDataset(cols, rows, sheetsInfo = ["formulas"]) {
                 break;
             case "strings":
                 cells = computeStringCells(cols, rows);
+                break;
+            case "chooseCols":
+                cells = computeChooseCol(cols);
                 break;
             case "splitVlookup":
                 cells = computeSplitVlookup(rows);
