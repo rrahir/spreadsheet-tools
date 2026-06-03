@@ -3,6 +3,10 @@
 Your job: make a fixed benchmark scenario run faster by iteratively modifying
 o-spreadsheet source, measuring, and keeping changes that win.
 
+On a long run, do this as a **persistent orchestrator that spawns one fresh
+sub-agent per hypothesis** — see [Orchestration](#orchestration). For a quick run
+of a few experiments, just do the loop inline.
+
 ## Repo layout (sibling dirs)
 
 ```
@@ -36,14 +40,40 @@ o-spreadsheet source, measuring, and keeping changes that win.
 You may **not** modify: `package.json`, build configs, lockfiles, anything in
 `spreadsheet-tools/`, git config or `scenario.js` (the locked workload).
 
+## Orchestration
+
+On a long run, act as a **persistent orchestrator** that spawns a **fresh sub-agent per
+hypothesis** (keeps each iteration's context small). Short run: loop inline. Run
+**strictly serially** — one hypothesis at a time, never parallel sub-agents or benches.
+
+**The orchestrator owns:**
+
+- **Forming the hypothesis**, as a *direction + rationale* — not the exact edit (e.g.
+  *"cut the ~700 MB `unsquishFormula` allocation by sharing immutable ranges; target
+  `cells imported`"*). Finding the concrete edit needs source-reading that would bloat
+  your context — that's the sub-agent's job.
+- **The knowledge digest**: current hotspots, **dead ends already tried** (so they're
+  never retried), kept changes, current baseline. Persist to `PERF_NOTES_<tag>.md`,
+  update after every result, and feed it into every sub-agent.
+- **Shared state** (`results.tsv`, `.last_bench`, branch HEAD, `benchmark/bundles/`) and
+  the **keep/discard decision** (a cross-iteration call a sub-agent can't make).
+
+**Each sub-agent** gets the digest + one direction. It investigates `src/`, edits, runs
+`jest`, `commit`s, `bench`es, then reports back: the verdict, the bench measures
+(verbatim), and a one-line learning (including *"infeasible because X"*). It does **not**
+decide keep/discard or touch `results.tsv`. Spawn the next only after the current is resolved.
+
 ## The loop
 
-Four verbs: `commit`, `bench`, `keep`, `discard`.
+Four verbs: `commit`, `bench`, `keep`, `discard`. One round = the orchestrator forms the
+hypothesis direction, a sub-agent does steps **1–4** (investigate + implement + measure,
+isolated), and the orchestrator does **5–7** (decide, record). (Inline runs do all eight.)
 
 ```
 LOOP FOREVER:
-  1. Form a hypothesis. Focus on algorithms, data structures, memory allocation.
-     Edit files under <o-spreadsheet>/src/.
+  1. Take the hypothesis direction (from the orchestrator; algorithms, data structures,
+     memory allocation). Investigate the relevant <o-spreadsheet>/src/ code, turn it
+     into a concrete change, and edit. If the direction proves infeasible, report why.
   2. Run tests: ./autoperf jest <pattern>
        - test asserts broken behavior → fix or revert, try again.
        - test asserts an implementation detail you legitimately changed →
@@ -175,10 +205,11 @@ what you think.
 ## Never stop after setup
 
 The setup focus question (Setup step 3) is the only allowed pause. Once the
-loop is running, do not pause to ask "should I continue?" — the user may be
-asleep. Keep going until manually interrupted. If you run out of ideas,
+loop is running, the orchestrator does not pause to ask "should I continue?" — the
+user may be asleep. Keep going until manually interrupted. If you run out of ideas,
 profile a kept commit, re-read the hot path, combine near-misses, or try a
-more radical refactor.
+more radical refactor — and update the knowledge digest each time so the next
+sub-agent builds on it instead of repeating dead ends.
 If something goes wrong for an unexpected reason and you can't fix it in 2-3
 attempts, stop and ask for help.
 
@@ -190,5 +221,7 @@ program.md            — this file
 README.md             — human overview
 scenario.js           — LOCKED workload (do not edit during a run)
 results.tsv           — experiment log (gitignored)
+PERF_NOTES_<tag>.md   — the orchestrator's knowledge digest: hotspots, dead ends,
+                        kept changes, current baseline (carry forward into each sub-agent)
 logs/                 — full bench report per run, plus raw .cpuprofile/.heapprofile (gitignored)
 ```
