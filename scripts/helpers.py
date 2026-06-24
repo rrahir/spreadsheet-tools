@@ -280,14 +280,22 @@ def convert_owl_imports(content):
     """
     // before
     import { Component, useState } from '@odoo/owl';
+    import * as owl from '@odoo/owl';
     // after
     const { Component, useState } = require('@odoo/owl');
+    const owl = require('@odoo/owl');
     """
-    return re.sub(
+    content = re.sub(
         r'import {([^}]+)} from ["\']@odoo/owl["\'];',
         r"const {\1} = require('@odoo/owl');",
         content,
     )
+    content = re.sub(
+        r"import \* as (\w+) from [\"']@odoo/owl[\"'];",
+        r"const \1 = require('@odoo/owl');",
+        content,
+    )
+    return content
 
 def convert_as(val):
     parts = val.split(" as ")
