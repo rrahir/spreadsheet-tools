@@ -28,6 +28,7 @@ spreadsheet_odoo_versions = {
     "saas-19.1": ["odoo", "saas-19.1", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js", "CSS"],
     "saas-19.2": ["odoo", "saas-19.2", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js", "CSS"],
     "saas-19.3": ["odoo", "saas-19.3", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js", "CSS"],
+    "saas-19.4": ["odoo", "saas-19.4", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js", "CSS"],
     "master": ["odoo", "master", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js", "CSS"],
 }
 
