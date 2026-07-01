@@ -120,7 +120,7 @@ def update(config: configparser.ConfigParser, versions: list[str]):
             subprocess.check_output(cmd)
 
         # make Pr
-        url = make_PR(repo_path, version)
+        url = make_PR(repo_path, version, rebase_method="rebase-merge")
         new_prs.append([version, url])
 
     # print All PR's, split between new and old

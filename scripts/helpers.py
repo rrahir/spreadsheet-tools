@@ -306,6 +306,11 @@ def make_PR(path, version, **kwargs) -> str:
     stop = kwargs.get("stop", True)
     # this can only be used with proper clearance
     autoCommit = kwargs.get("auto", False)
+    rebase_method = kwargs.get("rebase", False)
+    
+    if rebase_method and rebase_method not in ["rebase-ff", "rebase-merge", "squash"]:
+        raise Exception("Wrong rebase value")
+    
     print("making PR", version, path)
     with pushd(path):
         subprocess.check_output(
@@ -321,6 +326,10 @@ def make_PR(path, version, **kwargs) -> str:
         if autoCommit:
             retry_cmd(
                 ["gh", "pr", "comment", url, "--body", "robodoo r+"], 3
+            )
+        if rebase_method:
+            retry_cmd(
+                ["gh", "pr", "comment", url, "--body", f"robodoo {rebase_method}"], 3
             )
         return url
 
