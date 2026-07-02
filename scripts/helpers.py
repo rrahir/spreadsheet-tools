@@ -10,7 +10,7 @@ import pathlib
 
 from shared import spreadsheet_odoo_versions
 from const import DIFF_VALID_PATH
-from utils import pushd, retry_cmd
+from utils import pushd, retry_cmd, find_worktree
 from shared import get_version_info, get_verbose
 
 
@@ -18,8 +18,18 @@ pp = pprint.PrettyPrinter(depth=30)
 
 
 def checkout(exec_path, branch, force=False):
+    # If a worktree already has this branch checked out, use it directly.
+    worktree_path = find_worktree(exec_path, branch)
+    if worktree_path:
+        return worktree_path
+
     is_verbose = get_verbose()
-    with pushd(exec_path):
+
+    # For new branches, work inside the base version's worktree if one exists.
+    [_, version, _, _, _] = get_version_info(branch)
+    effective_path = find_worktree(exec_path, version) or exec_path
+
+    with pushd(effective_path):
         try:
             lingering_diff = subprocess.check_output(["git", "diff"]).decode(
                 "utf-8"
@@ -31,12 +41,11 @@ def checkout(exec_path, branch, force=False):
                     ).decode("utf-8")
                 else:
                     print_msg("You have unstaged changes. Please fix it", "FAIL")
-                    print_msg(f"Path:\n{exec_path}\n\n{lingering_diff}\n")
+                    print_msg(f"Path:\n{effective_path}\n\n{lingering_diff}\n")
                     print_msg("You have unstaged changes. Please fix it!", "FAIL")
                     sys.exit(1)
             subprocess.check_output(["git", "checkout", branch])
         except subprocess.CalledProcessError as e:
-            [_, version, _, _, _] = get_version_info(branch)
             is_verbose and print(
                 "Branch not found.\nCreating new local branch..."
             )
@@ -47,6 +56,8 @@ def checkout(exec_path, branch, force=False):
             subprocess.check_output(["git", "pull"])
             is_verbose and print(f"Create branch {branch}")
             subprocess.check_output(["git", "checkout", "-b", branch])
+
+    return effective_path
 
 
 def reset(exec_path, branch):
@@ -184,8 +195,8 @@ def run_dist(config: configparser.ConfigParser):
             exit(1)
 
 
-def run_build(config: configparser.ConfigParser):
-    with pushd(config["spreadsheet"]["repo_path"]):
+def run_build(spreadsheet_path: str):
+    with pushd(spreadsheet_path):
         print("Compiling build...")
         try:
             # cleans previous dist
@@ -200,11 +211,11 @@ def run_build(config: configparser.ConfigParser):
             exit(1)
 
 
-def copy_build(config: configparser.ConfigParser, lib_file_name: str, destination_path: str, stylesheet: str = "NO"):
+def copy_build(spreadsheet_path: str, lib_file_name: str, destination_path: str, stylesheet: str = "NO"):
     if stylesheet not in ["NO", "SCSS", "CSS"]:
         print_msg("Wrong stylesheet option", "FAIL")
         exit(1)
-    with pushd(os.path.join(config["spreadsheet"]["repo_path"], "build")):
+    with pushd(os.path.join(spreadsheet_path, "build")):
         print("Copying build...")
         # find files
         files = [lib_file_name, "o_spreadsheet.xml"]

@@ -133,6 +133,25 @@ def get_o_spreadsheet_js_hash(o_spredsheet_path) -> str:
     return commit_hash
 
 
+def find_worktree(repo_path, branch):
+    """Return the path of the worktree that has `branch` checked out, or None."""
+    try:
+        output = subprocess.check_output(
+            ["git", "worktree", "list", "--porcelain"],
+            cwd=repo_path,
+        ).decode("utf-8")
+    except subprocess.CalledProcessError:
+        return None
+    current_path = None
+    for line in output.splitlines():
+        if line.startswith("worktree "):
+            current_path = line[len("worktree "):]
+        elif line.startswith("branch refs/heads/") and current_path:
+            if line[len("branch refs/heads/"):] == branch:
+                return current_path
+    return None
+
+
 def retry_cmd(cmd_args: List[str], nbr_retry: int):
     for i in range(1, nbr_retry + 1):
         try:

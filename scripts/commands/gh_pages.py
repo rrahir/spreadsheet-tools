@@ -17,12 +17,12 @@ def gh_pages(config: configparser.ConfigParser):
     files = {}
     with pushd(spreadsheet_path):
 
-        checkout(spreadsheet_path, "master")
+        effective_spreadsheet_path = checkout(spreadsheet_path, "master")
         last_commit_hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode(
             "utf-8"
         )
-        run_build(config)
-        with pushd(os.path.join(config["spreadsheet"]["repo_path"], "build")):
+        run_build(effective_spreadsheet_path)
+        with pushd(os.path.join(effective_spreadsheet_path, "build")):
             for fr, to in to_copy.items():
                 if os.path.isfile(fr):
                     with open(fr, "r") as f:

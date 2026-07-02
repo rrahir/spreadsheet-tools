@@ -46,24 +46,25 @@ def update(config: configparser.ConfigParser, versions: list[str]):
             old_prs.append([version, existing_prs[version]])
             continue
 
-        repo_path = config[repo]["repo_path"]
-        full_path = os.path.join(repo_path, rel_path)
+        base_repo_path = config[repo]["repo_path"]
         o_branch = f"{version}-spreadsheet-{d}-{h}-BI"
 
-        # checkout o-spreadsheet
-        checkout(spreadsheet_path, version)
-        reset(spreadsheet_path, version)
+        # checkout o-spreadsheet (uses worktree if available)
+        effective_spreadsheet_path = checkout(spreadsheet_path, version)
+        reset(effective_spreadsheet_path, version)
 
-        # checkout Odoo (Community/Enterprise) on update branch
-        checkout(repo_path, version, force=True)
-        reset(repo_path, version)
+        # checkout Odoo (Community/Enterprise) on version branch (uses worktree if available)
+        effective_repo_path = checkout(base_repo_path, version, force=True)
+        reset(effective_repo_path, version)
+
+        full_path = os.path.join(effective_repo_path, rel_path)
 
         # build commit message - build/cp dist - push on remote
-        with pushd(repo_path):
+        with pushd(effective_repo_path):
             full_file_path = os.path.join(full_path, "o_spreadsheet.js")
             spreadsheet_hash = version
             # check last commit on o-spreadsheet is a REL
-            with pushd(spreadsheet_path):
+            with pushd(effective_spreadsheet_path):
                 cmd = [
                     "git",
                     "log",
@@ -90,7 +91,7 @@ def update(config: configparser.ConfigParser, versions: list[str]):
 
             # find all commits since last update
             odoo_hash = get_o_spreadsheet_js_hash(full_file_path)
-            body = get_commits(spreadsheet_path, odoo_hash, spreadsheet_hash)
+            body = get_commits(effective_spreadsheet_path, odoo_hash, spreadsheet_hash)
             if not body:
                 print(
                     f"Branch {version} is up-to-date on odoo/{repo}. Skipping...\n"
@@ -104,10 +105,10 @@ def update(config: configparser.ConfigParser, versions: list[str]):
 
             commit_title = odoo_commit_title(rel_path, version)
             message = commit_message(commit_title, body)
-            checkout(repo_path, o_branch)
+            checkout(effective_repo_path, o_branch)
             # build & cp build
-            run_build(config)
-            copy_build(config, lib_file_name, full_path, stylesheet)
+            run_build(effective_spreadsheet_path)
+            copy_build(effective_spreadsheet_path, lib_file_name, full_path, stylesheet)
             # commit
             subprocess.check_output(["git", "commit", "--no-verify", "-am", message])
             cmd = [
@@ -120,7 +121,7 @@ def update(config: configparser.ConfigParser, versions: list[str]):
             subprocess.check_output(cmd)
 
         # make Pr
-        url = make_PR(repo_path, version)
+        url = make_PR(effective_repo_path, version)
         new_prs.append([version, url])
 
     # print All PR's, split between new and old

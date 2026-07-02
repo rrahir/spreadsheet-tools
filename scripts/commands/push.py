@@ -31,9 +31,8 @@ def push(config: configparser.ConfigParser, local=False, forceBuild=False):
     spreadsheet_branch = get_spreadsheet_branch(config)
     [repo, version, rel_path, lib_file_name, stylesheet] = get_version_info(
         spreadsheet_branch)
-    repo_path = config[repo]["repo_path"]
+    base_repo_path = config[repo]["repo_path"]
 
-    full_path = os.path.join(repo_path, rel_path)
     body = get_commits(
         spreadsheet_path,
         version,
@@ -47,10 +46,11 @@ def push(config: configparser.ConfigParser, local=False, forceBuild=False):
     title = forceBuild and odoo_commit_title(
         rel_path, version) or "[IMP] o-spreadsheet: wip lib update"
     message = commit_message(title, body)
-    checkout(repo_path, spreadsheet_branch)
-    run_build(config)
-    copy_build(config, lib_file_name, full_path, stylesheet)
-    with pushd(repo_path):
+    effective_repo_path = checkout(base_repo_path, spreadsheet_branch)
+    full_path = os.path.join(effective_repo_path, rel_path)
+    run_build(spreadsheet_path)
+    copy_build(spreadsheet_path, lib_file_name, full_path, stylesheet)
+    with pushd(effective_repo_path):
         subprocess.check_output(["git", "commit", "-am", message])
         if not local:
             cmd = [

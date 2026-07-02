@@ -47,12 +47,12 @@ def release(config: configparser.ConfigParser, versions: list[str]):
             old_prs.append([version, existing_prs[version]])
             continue
 
-        # checkout o-spreadsheet
-        checkout(spreadsheet_path, version, force=True)
-        reset(spreadsheet_path, version)
+        # checkout o-spreadsheet (uses worktree if available)
+        effective_spreadsheet_path = checkout(spreadsheet_path, version, force=True)
+        reset(effective_spreadsheet_path, version)
 
         # build commit message - build/cp dist - push on remote
-        with pushd(spreadsheet_path):
+        with pushd(effective_spreadsheet_path):
             cmd = [
                 "git",
                 "log",
@@ -72,7 +72,7 @@ def release(config: configparser.ConfigParser, versions: list[str]):
                 )
                 continue
 
-            tag = increment_package_version(spreadsheet_path, version)
+            tag = increment_package_version(effective_spreadsheet_path, version)
             message = commit_message(spreadsheet_release_title(tag), body + "\n\nTask: 0")
 
             # commit
@@ -91,7 +91,7 @@ def release(config: configparser.ConfigParser, versions: list[str]):
             subprocess.check_output(cmd)
 
         # make Pr
-        url = make_PR(spreadsheet_path, version, auto=True)
+        url = make_PR(effective_spreadsheet_path, version, auto=True)
         new_prs.append([version, url])
 
     # print All PR's, split between new and old

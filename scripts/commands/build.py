@@ -14,8 +14,7 @@ def build(config: configparser.ConfigParser):
     spreadsheet_branch = get_spreadsheet_branch(config)
     [repo, _, rel_path, lib_file_name,
         stylesheet] = get_version_info(spreadsheet_branch)
-    with pushd(spreadsheet_path):
-        repo_path = config[repo]["repo_path"]
-        full_path = os.path.join(repo_path, rel_path)
-        run_build(config)
-        copy_build(config, lib_file_name, full_path, stylesheet)
+    repo_path = config[repo]["repo_path"]
+    full_path = os.path.join(repo_path, rel_path)
+    run_build(spreadsheet_path)
+    copy_build(spreadsheet_path, lib_file_name, full_path, stylesheet)
