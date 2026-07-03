@@ -25,9 +25,9 @@ def checkout(exec_path, branch, force=False):
 
     is_verbose = get_verbose()
 
-    # For new branches, work inside the base version's worktree if one exists.
-    [_, version, _, _, _] = get_version_info(branch)
-    effective_path = find_worktree(exec_path, version) or exec_path
+    # For version-prefixed branches, work inside the base version's worktree if one exists.
+    matched_version = next((v for v in spreadsheet_odoo_versions if branch.startswith(v)), None)
+    effective_path = (find_worktree(exec_path, matched_version) if matched_version else None) or exec_path
 
     with pushd(effective_path):
         try:
@@ -46,6 +46,7 @@ def checkout(exec_path, branch, force=False):
                     sys.exit(1)
             subprocess.check_output(["git", "checkout", branch])
         except subprocess.CalledProcessError as e:
+            [_, version, _, _, _] = get_version_info(branch)
             is_verbose and print(
                 "Branch not found.\nCreating new local branch..."
             )
