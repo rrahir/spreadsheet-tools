@@ -9,13 +9,15 @@ from helpers import (
     run_build,
     copy_build,
     odoo_commit_title,
-    commit_message
+    commit_message,
+    check_remote_alignment
 )
 from utils import pushd
 from shared import get_spreadsheet_branch, get_version_info
 
 
 def push(config: configparser.ConfigParser, local=False, forceBuild=False):
+    check_remote_alignment()
     print("\n=== PUSH ===\n")
     spreadsheet_path = config["spreadsheet"]["repo_path"]
 
