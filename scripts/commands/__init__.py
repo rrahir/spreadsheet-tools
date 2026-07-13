@@ -5,3 +5,4 @@ from .push import push
 from .update import update
 from .benchmark import benchmark
 from .gh_pages import gh_pages
+from .fast_update import fast_update
