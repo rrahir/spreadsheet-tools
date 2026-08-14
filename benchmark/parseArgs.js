@@ -1,0 +1,15 @@
+export function parseArgs(argv) {
+    const out = { positional: [] };
+    for (let i = 0; i < argv.length; i++) {
+        const a = argv[i];
+        if (a.startsWith("--")) {
+            const key = a.slice(2);
+            const next = argv[i + 1];
+            if (!next || next.startsWith("--")) { out[key] = true; }
+            else { out[key] = next; i++; }
+        } else {
+            out.positional.push(a);
+        }
+    }
+    return out;
+}
