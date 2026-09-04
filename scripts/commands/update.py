@@ -23,6 +23,11 @@ from contributors import CONTRIBUTORS
 
 
 def update(config: configparser.ConfigParser, versions: list[str]):
+    """ Following a release, updates the code of the lib to Odoo
+        and creates a pull request to merge the changes.
+        External dependencies are not bundled with it
+    """
+
     check_remote_alignment()
     print("\n=== UPDATE ODOO ===\nThis may take a while ;-)\n")
     spreadsheet_path = config["spreadsheet"]["repo_path"]

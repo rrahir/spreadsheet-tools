@@ -24,6 +24,11 @@ from utils import pushd
 
 
 def release(config: configparser.ConfigParser, versions: list[str]):
+    """ generates a new minor version of the lib, commits the change
+        and triggers an release of the new minor version to npm
+        External dependencies are not bundled with it
+    """
+
     check_remote_alignment()
     # todo
     print("\n=== RELEASE O-SPREADSHEET ===\nThis may take a while ;-)\n")
