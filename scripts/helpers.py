@@ -322,6 +322,8 @@ def make_PR(path, version, **kwargs) -> str:
         msg = []
         if stop:
             msg.append("robodoo fw=no")
+        if rebase_method:
+            msg.append(f"robodoo {rebase_method}")
         if autoCommit:
             msg.append("robodoo r+")
 
@@ -329,10 +331,7 @@ def make_PR(path, version, **kwargs) -> str:
             retry_cmd(
                 ["gh", "pr", "comment", url, "--body", "\n".join(msg)], 3
             )
-        if rebase_method:
-            retry_cmd(
-                ["gh", "pr", "comment", url, "--body", f"robodoo {rebase_method}"], 3
-            )
+
         return url
 
 
