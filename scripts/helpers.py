@@ -306,7 +306,7 @@ def make_PR(path, version, **kwargs) -> str:
     stop = kwargs.get("stop", True)
     # this can only be used with proper clearance
     autoCommit = kwargs.get("auto", False)
-    rebase_method = kwargs.get("rebase", False)
+    rebase_method = kwargs.get("rebase_method", False)
     
     if rebase_method and rebase_method not in ["rebase-ff", "rebase-merge", "squash"]:
         raise Exception("Wrong rebase value")
