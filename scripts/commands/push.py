@@ -58,6 +58,8 @@ def push(config: configparser.ConfigParser, local=False, forceBuild=False):
             cmd = [
                 "git",
                 "push",
+                "--force-with-lease",
+                "--force-if-includes",
                 "-u",
                 config[repo]["remote-dev"],
                 spreadsheet_branch,
