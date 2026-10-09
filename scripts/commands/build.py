@@ -18,4 +18,4 @@ def build(config: configparser.ConfigParser):
         repo_path = config[version_info.repo]["repo_path"]
         full_path = os.path.join(repo_path, version_info.rel_path)
         run_build(config)
-        copy_build(config, version_info.lib_file_name, full_path, version_info.stylesheet)
+        copy_build(config, version_info.lib_file_name, full_path, version_info.stylesheet, version_info.copy_types)

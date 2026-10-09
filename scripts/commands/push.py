@@ -53,7 +53,7 @@ def push(config: configparser.ConfigParser, local=False, forceBuild=False):
     message = commit_message(title, body)
     checkout(repo_path, spreadsheet_branch)
     run_build(config)
-    copy_build(config, version_info.lib_file_name, full_path, version_info.stylesheet)
+    copy_build(config, version_info.lib_file_name, full_path, version_info.stylesheet, version_info.copy_types)
     with pushd(repo_path):
         subprocess.check_output(["git", "commit", "-am", message])
         if not local:

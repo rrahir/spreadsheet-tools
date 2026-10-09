@@ -115,7 +115,7 @@ def update(config: configparser.ConfigParser, versions: list[str]):
             checkout(repo_path, o_branch)
             # build & cp build
             run_build(config)
-            copy_build(config, version_info.lib_file_name, full_path, version_info.stylesheet)
+            copy_build(config, version_info.lib_file_name, full_path, version_info.stylesheet, version_info.copy_types)
             # commit
             subprocess.check_output(["git", "commit", "--no-verify", "-am", message])
             cmd = [

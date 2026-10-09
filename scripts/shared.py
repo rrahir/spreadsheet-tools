@@ -21,6 +21,7 @@ class VersionInfo(NamedTuple):
     version: str
     lib_file_name: str
     stylesheet: str  # "NO", "SCSS" or "CSS"
+    copy_types: bool = False  # copy the types file (o_spreadsheet.d.ts) next to the lib
     repo: str = "odoo"
     rel_path: str = "addons/spreadsheet/static/src/o_spreadsheet/"
 
