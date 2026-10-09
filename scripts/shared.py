@@ -1,5 +1,6 @@
 import configparser
 import subprocess
+from typing import NamedTuple
 
 from utils import pushd
 
@@ -16,18 +17,26 @@ def get_verbose() -> bool:
     return VERBOSE
 
 
-# { branch prefix (stable release): [version, filepath in enterprise]}
+class VersionInfo(NamedTuple):
+    version: str
+    lib_file_name: str
+    stylesheet: str  # "NO", "SCSS" or "CSS"
+    repo: str = "odoo"
+    rel_path: str = "addons/spreadsheet/static/src/o_spreadsheet/"
+
+
+# { branch prefix (stable release): VersionInfo }
 # TODO: find another way to get the version to ordinate them
 spreadsheet_odoo_versions = {
-    "17.0": ["odoo", "17.0", "addons/spreadsheet/static/src/o_spreadsheet/", "o-spreadsheet.iife.js", "NO"],
-    "18.0": ["odoo", "18.0", "addons/spreadsheet/static/src/o_spreadsheet/", "o-spreadsheet.esm.js", "NO"],
-    "19.0": ["odoo", "19.0", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js", "SCSS"],
-    "saas-19.1": ["odoo", "saas-19.1", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js", "CSS"],
-    "saas-19.2": ["odoo", "saas-19.2", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js", "CSS"],
-    "saas-19.3": ["odoo", "saas-19.3", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js", "CSS"],
-    "saas-19.4": ["odoo", "saas-19.4", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js", "CSS"],
-    "20.0": ["odoo", "20.0", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js", "CSS"],
-    "master": ["odoo", "master", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js", "CSS"],
+    "17.0": VersionInfo(version="17.0", lib_file_name="o-spreadsheet.iife.js", stylesheet="NO"),
+    "18.0": VersionInfo(version="18.0", lib_file_name="o-spreadsheet.esm.js", stylesheet="NO"),
+    "19.0": VersionInfo(version="19.0", lib_file_name="o_spreadsheet.esm.js", stylesheet="SCSS"),
+    "saas-19.1": VersionInfo(version="saas-19.1", lib_file_name="o_spreadsheet.esm.js", stylesheet="CSS"),
+    "saas-19.2": VersionInfo(version="saas-19.2", lib_file_name="o_spreadsheet.esm.js", stylesheet="CSS"),
+    "saas-19.3": VersionInfo(version="saas-19.3", lib_file_name="o_spreadsheet.esm.js", stylesheet="CSS"),
+    "saas-19.4": VersionInfo(version="saas-19.4", lib_file_name="o_spreadsheet.esm.js", stylesheet="CSS"),
+    "20.0": VersionInfo(version="20.0", lib_file_name="o_spreadsheet.esm.js", stylesheet="CSS"),
+    "master": VersionInfo(version="master", lib_file_name="o_spreadsheet.esm.js", stylesheet="CSS"),
 }
 
 REPOS = ["enterprise", "spreadsheet", "odoo"]
@@ -47,7 +56,7 @@ def get_spreadsheet_branch(config: configparser.ConfigParser) -> str:
         exit(1)
 
 
-def get_version_info(branch: str) -> "tuple[str, str]":
+def get_version_info(branch: str) -> VersionInfo:
     for version in spreadsheet_odoo_versions:
         if branch.startswith(version):
             return spreadsheet_odoo_versions[version]

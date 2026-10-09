@@ -36,7 +36,7 @@ def checkout(exec_path, branch, force=False):
                     sys.exit(1)
             subprocess.check_output(["git", "checkout", branch])
         except subprocess.CalledProcessError as e:
-            [_, version, _, _, _] = get_version_info(branch)
+            version = get_version_info(branch).version
             is_verbose and print(
                 "Branch not found.\nCreating new local branch..."
             )
