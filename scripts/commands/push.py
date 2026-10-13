@@ -1,19 +1,20 @@
 import configparser
-import subprocess
 import os
 import sys
 
 from helpers import (
-    get_commits,
+    check_remote_alignment,
     checkout,
-    run_build,
-    copy_build,
-    odoo_commit_title,
     commit_message,
-    check_remote_alignment
+    copy_build,
+    get_commits,
+    git,
+    odoo_commit_title,
+    run_build,
 )
-from utils import pushd
 from shared import get_spreadsheet_branch, get_version_info
+from utils import pushd
+
 from .check_odoo_sync import warn_odoo_sync
 
 
@@ -24,7 +25,7 @@ def push(config: configparser.ConfigParser, local=False, forceBuild=False):
 
     with pushd(spreadsheet_path):
         # TODORAR check that head is up-to-date w/ remote as well
-        if subprocess.check_output(["git", "diff"]):
+        if git("diff"):
             val = input(
                 "You have unstaged changes, do you wish to continue without commiting them ? [y/n] : "
             )
@@ -55,15 +56,13 @@ def push(config: configparser.ConfigParser, local=False, forceBuild=False):
     run_build(config)
     copy_build(config, lib_file_name, full_path, stylesheet)
     with pushd(repo_path):
-        subprocess.check_output(["git", "commit", "-am", message])
+        git("commit", "-am", message)
         if not local:
-            cmd = [
-                "git",
+            git(
                 "push",
                 "--force-with-lease",
                 "--force-if-includes",
                 "-u",
                 config[repo]["remote-dev"],
                 spreadsheet_branch,
-            ]
-            subprocess.check_output(cmd)
+            )

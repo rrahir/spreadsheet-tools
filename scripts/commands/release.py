@@ -1,24 +1,26 @@
 # Make a release commit on o-spreadsheet versions
 # This will be handled by a Github action to automatically publish the release on npm
 
+import configparser
+import json
 import os
 import re
-import json
-import configparser
 import subprocess
 from datetime import date
 from uuid import uuid4
+
 from helpers import (
+    check_remote_alignment,
     checkout,
-    get_commits,
+    commit_message,
     fetch_repositories,
+    get_commits,
     get_o_spreadsheet_release_prs,
+    git,
     make_PR,
+    print_msg,
     reset,
     spreadsheet_release_title,
-    commit_message,
-    print_msg,
-    check_remote_alignment
 )
 from utils import pushd
 
@@ -58,17 +60,7 @@ def release(config: configparser.ConfigParser, versions: list[str]):
 
         # build commit message - build/cp dist - push on remote
         with pushd(spreadsheet_path):
-            cmd = [
-                "git",
-                "log",
-                "--pretty=format:%h",
-                "-n",
-                "1",
-                "--grep",
-                "\\[REL\\]",
-            ]
-
-            hash = subprocess.check_output(cmd).decode("utf-8")
+            hash = git("log", "--pretty=format:%h", "-n", "1", "--grep", "\\[REL\\]")
             body = get_commits(spreadsheet_path,hash,version)
 
             if not body:
@@ -83,17 +75,9 @@ def release(config: configparser.ConfigParser, versions: list[str]):
             # commit
             release_branch = f"{version}-{tag}-release-{d}-{h}-BI"
 
-            subprocess.check_output(["git", "checkout", "-b", release_branch])
-            subprocess.check_output(["git", "commit", "-am", message])
-
-            cmd = [
-                "git",
-                "push",
-                "-u",
-                config["spreadsheet"]["remote"],
-                release_branch,
-            ]
-            subprocess.check_output(cmd)
+            git("checkout", "-b", release_branch)
+            git("commit", "-am", message)
+            git("push", "-u", config["spreadsheet"]["remote"], release_branch)
 
         # make Pr
         url = make_PR(spreadsheet_path, version, auto=True)

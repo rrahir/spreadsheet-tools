@@ -1,12 +1,13 @@
 # Will build o_spreasheet, checkout the corresponding odoo local branch and copy the build
 # No commit
 # no new branch
-import os
 import configparser
+import os
 
-from helpers import run_build, copy_build, check_remote_alignment
+from helpers import check_remote_alignment, copy_build, run_build
 from shared import get_spreadsheet_branch, get_version_info
 from utils import pushd
+
 from .check_odoo_sync import warn_odoo_sync
 
 

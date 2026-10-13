@@ -1,31 +1,33 @@
 import configparser
-import subprocess
 import os
 from datetime import date
 from uuid import uuid4
-from shared import spreadsheet_odoo_versions
-from utils import pushd, get_o_spreadsheet_js_hash
+
+from contributors import CONTRIBUTORS
 from helpers import (
+    check_remote_alignment,
     checkout,
-    get_commits,
+    commit_message,
     copy_build,
-    odoo_commit_title,
     fetch_repositories,
+    get_commits,
     get_odoo_prs,
+    git,
     make_PR,
+    odoo_commit_title,
+    print_msg,
     reset,
     run_build,
-    print_msg,
-    commit_message,
-    check_remote_alignment
 )
-from contributors import CONTRIBUTORS
+from shared import spreadsheet_odoo_versions
+from utils import get_o_spreadsheet_js_hash, pushd
+
 from .check_odoo_sync import (
-    get_pr_numbers,
-    find_missing_commits,
-    print_missing_commits,
     apply_missing_commits,
+    find_missing_commits,
     get_open_pr_urls,
+    get_pr_numbers,
+    print_missing_commits,
 )
 
 
@@ -77,29 +79,13 @@ def update(config: configparser.ConfigParser, versions: list[str]):
             spreadsheet_hash = version
             # check last commit on o-spreadsheet is a REL
             with pushd(spreadsheet_path):
-                cmd = [
-                    "git",
-                    "log",
-                    "HEAD^..HEAD",
-                    "--pretty=format:%s",
-                ]
-                commit = subprocess.check_output(cmd).decode("utf-8")
+                commit = git("log", "HEAD^..HEAD", "--pretty=format:%s")
                 if not commit.startswith("[REL]"):
                     print_msg(
                         f"""The last commit on o-spreadsheet in version {version} is not a release.\n"""
                         """Defaulting on last [REL] commit...""", "WARNING"
                     )
-                    cmd = [
-                        "git",
-                        "log",
-                        "--pretty=format:%h",
-                        "-n",
-                        "1",
-                        "--grep",
-                        "\\[REL\\]",
-                    ]
-                    spreadsheet_hash = subprocess.check_output(
-                        cmd).decode("utf-8")
+                    spreadsheet_hash = git("log", "--pretty=format:%h", "-n", "1", "--grep", "\\[REL\\]")
 
             # find all commits since last update
             odoo_hash = get_o_spreadsheet_js_hash(full_file_path)
@@ -122,7 +108,7 @@ def update(config: configparser.ConfigParser, versions: list[str]):
             run_build(config)
             copy_build(config, lib_file_name, full_path, stylesheet)
             # commit
-            subprocess.check_output(["git", "commit", "--no-verify", "-am", message])
+            git("commit", "--no-verify", "-am", message)
 
         # apply the odoo/enterprise changes related to the released o-spreadsheet PRs
         pr_numbers = get_pr_numbers(config, odoo_hash, spreadsheet_hash)
@@ -142,14 +128,7 @@ def update(config: configparser.ConfigParser, versions: list[str]):
         for target_repo in dict.fromkeys([repo, *missing]):
             target_path = config[target_repo]["repo_path"]
             with pushd(target_path):
-                cmd = [
-                    "git",
-                    "push",
-                    "-u",
-                    config[target_repo]["remote-dev"],
-                    o_branch,
-                ]
-                subprocess.check_output(cmd)
+                git("push", "-u", config[target_repo]["remote-dev"], o_branch)
             url = make_PR(target_path, version, rebase_method="rebase-merge")
             new_prs.append([f"{version} ({target_repo})", url])
 
