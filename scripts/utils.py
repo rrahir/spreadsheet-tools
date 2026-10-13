@@ -4,9 +4,10 @@ import re
 import subprocess
 import time
 from functools import partial
+from typing import list
 
-from typing import List
 from const import USER_HOME
+
 
 # See https://stackoverflow.com/questions/6194499/pushd-through-os-system
 # Allows one to execute code in a given dir
@@ -65,7 +66,7 @@ def guess_odoo_repo() -> str:
         str(index + 1): proposition
         for (index, proposition) in enumerate(result)
     }
-    repos_guess = "\n".join(["%s: %s" % (i, p) for [i, p] in repos.items()])
+    repos_guess = "\n".join([f"{i}: {p}" for [i, p] in repos.items()])
     print(f"\nsuggested repo path: \n{repos_guess}")
     answer = input("\nyour repo path: ")
     return repos.get(answer, answer)
@@ -92,7 +93,7 @@ def guess_enterprise_repo() -> str:
         str(index + 1): proposition
         for (index, proposition) in enumerate(result)
     }
-    repos_guess = "\n".join(["%s: %s" % (i, p) for [i, p] in repos.items()])
+    repos_guess = "\n".join([f"{i}: {p}" for [i, p] in repos.items()])
     print(f"\nsuggested repo path: \n{repos_guess}")
     answer = input("\nyour repo path: ")
     return repos.get(answer, answer)
@@ -103,7 +104,7 @@ def get_remote(exec_path, remote_addr) -> str:
         cmd = ["git", "remote", "-v"]
         remotes = subprocess.check_output(cmd).decode("utf-8").split("\n")
 
-        remote = [remote for remote in remotes if remote_addr in remote][0]
+        remote = next(remote for remote in remotes if remote_addr in remote)
         return remote.split()[0]
 
 
@@ -127,13 +128,13 @@ def get_o_spreadsheet_js_hash(o_spredsheet_path) -> str:
         .decode("utf-8")
         .split("\n")
     )
-    hash_line = [line for line in lines if "hash" in line][0]
+    hash_line = next(line for line in lines if "hash" in line)
     # it can be a single or double quotes string
     commit_hash = re.findall(r"[\",'](.+?)[\",']", hash_line)[0]
     return commit_hash
 
 
-def retry_cmd(cmd_args: List[str], nbr_retry: int):
+def retry_cmd(cmd_args: list[str], nbr_retry: int):
     for i in range(1, nbr_retry + 1):
         try:
             result = subprocess.check_output(cmd_args)

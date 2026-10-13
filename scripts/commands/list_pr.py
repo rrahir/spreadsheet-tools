@@ -1,4 +1,5 @@
 import configparser
+
 from helpers import get_odoo_prs, print_msg
 
 

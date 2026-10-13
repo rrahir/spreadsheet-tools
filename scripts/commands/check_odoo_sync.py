@@ -5,7 +5,7 @@ import re
 import subprocess
 import sys
 
-from helpers import print_msg
+from helpers import git, print_msg
 from shared import get_spreadsheet_branch, get_version_info
 from utils import pushd
 
@@ -32,10 +32,6 @@ LIB_FILES = {
     "o_spreadsheet_variables.scss",
 }
 ODOO_REPOS = {"odoo": "odoo/odoo", "enterprise": "odoo/enterprise"}
-
-
-def git(*args) -> str:
-    return subprocess.check_output(["git", *args]).decode("utf-8").strip()
 
 
 def get_pr_numbers(config, old, new) -> "list[str]":
@@ -187,7 +183,8 @@ def git_branch_exists(config, repo, branch) -> bool:
 def apply_missing_commits(config, missing, local_branch, base, hint=""):
     """Cherry-pick the missing commits on local_branch, which is created from base if needed.
     The repositories are left on local_branch.
-    On conflict, prints everything that remains to cherry-pick (and the hint) and exits.
+    On conflict, waits for the user to resolve it and goes on with the next commits. If the user
+    quits, prints everything that remains to cherry-pick (and the hint) and exits.
     """
     for repo in missing:
         with pushd(config[repo]["repo_path"]):
@@ -215,9 +212,11 @@ def apply_missing_commits(config, missing, local_branch, base, hint=""):
             except subprocess.CalledProcessError:
                 print_msg(
                     f"\nConflict while cherry-picking {sha[:10]} {subject}\n"
-                    f"in {repo} ({config[repo]['repo_path']}) on {local_branch}.\n"
-                    "Resolve it and run `git cherry-pick --continue`.", "FAIL"
+                    f"in {repo} ({config[repo]['repo_path']}) on {local_branch}.", "FAIL"
                 )
+                # if sys.stdin.isatty() and wait_conflict_resolution(config[repo]["repo_path"]):
+                #     continue
+                # print_msg("Resolve it and run `git cherry-pick --continue`.", "FAIL")
                 if plan[index + 1:]:
                     print_cherry_pick_plan(config, plan[index + 1:], local_branch, base, started_repos)
                 if hint:

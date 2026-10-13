@@ -1,9 +1,8 @@
 # Will build o_spreadsheet on master and copy the js, css and xml files to the gh-pages branch
-import os
 import configparser
-import subprocess
+import os
 
-from helpers import run_build, checkout, commit_message
+from helpers import checkout, commit_message, git, run_build
 from utils import pushd
 
 
@@ -18,9 +17,7 @@ def gh_pages(config: configparser.ConfigParser):
     with pushd(spreadsheet_path):
 
         checkout(spreadsheet_path, "master")
-        last_commit_hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode(
-            "utf-8"
-        )
+        last_commit_hash = git("rev-parse", "HEAD")
         run_build(config)
         with pushd(os.path.join(config["spreadsheet"]["repo_path"], "build")):
             for fr, to in to_copy.items():
@@ -37,4 +34,4 @@ def gh_pages(config: configparser.ConfigParser):
             f"Bump to {last_commit_hash[:6]}",
             f"bump to commit odoo/o-spreadsheet@{last_commit_hash}",
         )
-        subprocess.check_output(["git", "commit", "-am", message])
+        git("commit", "-am", message)
