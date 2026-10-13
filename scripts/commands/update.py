@@ -20,6 +20,13 @@ from helpers import (
     check_remote_alignment
 )
 from contributors import CONTRIBUTORS
+from .check_odoo_sync import (
+    get_pr_numbers,
+    find_missing_commits,
+    print_missing_commits,
+    apply_missing_commits,
+    get_open_pr_urls,
+)
 
 
 def update(config: configparser.ConfigParser, versions: list[str]):
@@ -34,6 +41,7 @@ def update(config: configparser.ConfigParser, versions: list[str]):
     fetch_repositories(config, versions)
     old_prs = []
     new_prs = []
+    prs_to_close = []
     existing_prs = get_odoo_prs(config)
     today = date.today()
     d = f"{str(today.day).zfill(2)}{str(today.month).zfill(2)}"
@@ -115,18 +123,35 @@ def update(config: configparser.ConfigParser, versions: list[str]):
             copy_build(config, lib_file_name, full_path, stylesheet)
             # commit
             subprocess.check_output(["git", "commit", "--no-verify", "-am", message])
-            cmd = [
-                "git",
-                "push",
-                "-u",
-                config[repo]["remote-dev"],
-                o_branch,
-            ]
-            subprocess.check_output(cmd)
 
-        # make Pr
-        url = make_PR(repo_path, version, rebase_method="rebase-merge")
-        new_prs.append([version, url])
+        # apply the odoo/enterprise changes related to the released o-spreadsheet PRs
+        pr_numbers = get_pr_numbers(config, odoo_hash, spreadsheet_hash)
+        missing = find_missing_commits(config, o_branch, version, pr_numbers)
+        if missing:
+            print_missing_commits(missing, o_branch)
+            remaining_versions = versions[versions.index(version) + 1:]
+            hint = "\n".join([
+                f"Then push {o_branch} on the dev remote of {', '.join(dict.fromkeys([repo, *missing]))} and create the PR(s).",
+                f"PRs to close manually once merged: {' '.join(get_open_pr_urls(missing))}",
+                *([f"Versions not processed yet: {' '.join(remaining_versions)}"] if remaining_versions else []),
+            ])
+            apply_missing_commits(config, missing, o_branch, version, hint)
+            prs_to_close.extend([version, url] for url in get_open_pr_urls(missing))
+
+        # push & make Pr(s)
+        for target_repo in dict.fromkeys([repo, *missing]):
+            target_path = config[target_repo]["repo_path"]
+            with pushd(target_path):
+                cmd = [
+                    "git",
+                    "push",
+                    "-u",
+                    config[target_repo]["remote-dev"],
+                    o_branch,
+                ]
+                subprocess.check_output(cmd)
+            url = make_PR(target_path, version, rebase_method="rebase-merge")
+            new_prs.append([f"{version} ({target_repo})", url])
 
     # print All PR's, split between new and old
     if old_prs:
@@ -139,6 +164,10 @@ def update(config: configparser.ConfigParser, versions: list[str]):
             "\n".join([f"\t{version} - <{url}>" for [version, url] in new_prs]))
         print(
             f"Runbot builds: <https://runbot.odoo.com/?search=spreadsheet-{d}-{h}-BI>")
+    if prs_to_close:
+        print_msg("\nPRs included in the update, to close manually once merged:", "WARNING")
+        print(
+            "\n".join([f"\t{version} - <{url}>" for [version, url] in prs_to_close]))
     if not (old_prs or new_prs):
         print("Every versions are up-to-date")
 

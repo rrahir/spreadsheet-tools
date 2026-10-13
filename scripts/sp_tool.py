@@ -33,6 +33,7 @@ def main():
         sp_tool push [-l -f -s] [--config <path>]
         sp_tool list-pr [--config <path>]
         sp_tool check-odoo-sync [--config <path>]
+        sp_tool sync-odoo [--config <path>]
         sp_tool process [--config <path>]
         sp_tool -h | --help | --version
         sp_tool benchmark
@@ -59,7 +60,8 @@ def main():
     sp_tool list-pr     # uses gh to find the list of Open PR about updating o_spreadsheet
     sp_tool check-odoo-sync # checks that the odoo/enterprise branches with the same name as the current
                         # o-spreadsheet branch contain the odoo/enterprise changes of the o-spreadsheet
-                        # PRs merged in master since the branch was created
+                        # PRs merged in master since the last common release
+    sp_tool sync-odoo   # idem check-odoo-sync, and cherry-picks the missing commits on the local branches
     sp_tool process     # shows the workflow readme file
     sp_tool benchmark   # start the benchmark tool
     sp_tool gh-pages    # create a commit to update the gh-pages branch
@@ -102,6 +104,10 @@ def main():
 
     if arguments["check-odoo-sync"]:
         check_odoo_sync(config)
+        exit(0)
+
+    if arguments["sync-odoo"]:
+        check_odoo_sync(config, apply=True)
         exit(0)
 
     if arguments["update"]:
