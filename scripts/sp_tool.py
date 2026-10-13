@@ -8,7 +8,7 @@ import webbrowser
 
 from docopt import docopt
 
-from commands import list_pr, update, push, release, build, benchmark, gh_pages
+from commands import list_pr, update, push, release, build, benchmark, gh_pages, check_odoo_sync
 from shared import set_verbose, spreadsheet_odoo_versions
 from versions import check_versions
 from config import get_config
@@ -32,6 +32,7 @@ def main():
         sp_tool build [-s] [--config <path>]
         sp_tool push [-l -f -s] [--config <path>]
         sp_tool list-pr [--config <path>]
+        sp_tool check-odoo-sync [--config <path>]
         sp_tool process [--config <path>]
         sp_tool -h | --help | --version
         sp_tool benchmark
@@ -56,6 +57,9 @@ def main():
                         # files locally (no commit, no new branch)
     sp_tool push        # idem build, except checkouts a branch on odoo with the same name and pushes to remote dev
     sp_tool list-pr     # uses gh to find the list of Open PR about updating o_spreadsheet
+    sp_tool check-odoo-sync # checks that the odoo/enterprise branches with the same name as the current
+                        # o-spreadsheet branch contain the odoo/enterprise changes of the o-spreadsheet
+                        # PRs merged in master since the branch was created
     sp_tool process     # shows the workflow readme file
     sp_tool benchmark   # start the benchmark tool
     sp_tool gh-pages    # create a commit to update the gh-pages branch
@@ -94,6 +98,10 @@ def main():
 
     if arguments["list-pr"]:
         list_pr(config)
+        exit(0)
+
+    if arguments["check-odoo-sync"]:
+        check_odoo_sync(config)
         exit(0)
 
     if arguments["update"]:
