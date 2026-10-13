@@ -7,10 +7,12 @@ import configparser
 from helpers import run_build, copy_build, check_remote_alignment
 from shared import get_spreadsheet_branch, get_version_info
 from utils import pushd
+from .check_odoo_sync import warn_odoo_sync
 
 
 def build(config: configparser.ConfigParser):
     check_remote_alignment()
+    warn_odoo_sync(config)
     spreadsheet_path = config["spreadsheet"]["repo_path"]
     spreadsheet_branch = get_spreadsheet_branch(config)
     [repo, _, rel_path, lib_file_name,

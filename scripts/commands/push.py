@@ -14,6 +14,7 @@ from helpers import (
 )
 from utils import pushd
 from shared import get_spreadsheet_branch, get_version_info
+from .check_odoo_sync import warn_odoo_sync
 
 
 def push(config: configparser.ConfigParser, local=False, forceBuild=False):
@@ -30,6 +31,7 @@ def push(config: configparser.ConfigParser, local=False, forceBuild=False):
             if val.lower() not in ["y", "yes"]:
                 print("Exiting the script...")
                 exit(1)
+    warn_odoo_sync(config)
     spreadsheet_branch = get_spreadsheet_branch(config)
     [repo, version, rel_path, lib_file_name, stylesheet] = get_version_info(
         spreadsheet_branch)
