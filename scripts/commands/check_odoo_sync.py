@@ -180,6 +180,42 @@ def git_branch_exists(config, repo, branch) -> bool:
         return bool(git("branch", "--list", branch))
 
 
+def cherry_pick_in_progress() -> bool:
+    return subprocess.run(
+        ["git", "rev-parse", "-q", "--verify", "CHERRY_PICK_HEAD"], capture_output=True
+    ).returncode == 0
+
+
+def wait_conflict_resolution(repo_path) -> bool:
+    """Lets the user resolve the cherry-pick conflict in the current repo.
+    Returns False if the user wants to stop.
+    """
+    while True:
+        answer = input(
+            f"\nResolve the conflict in {repo_path} (git add the files), then\n"
+            "[Enter] continue / [s] skip this commit / [q] quit : "
+        ).strip().lower()
+        if answer == "q":
+            return False
+        if not cherry_pick_in_progress():
+            # already continued/committed by the user
+            return True
+        if answer == "s":
+            git("cherry-pick", "--skip")
+            return True
+        unmerged = git("diff", "--name-only", "--diff-filter=U")
+        if unmerged:
+            print_msg(f"Still unresolved:\n{unmerged}", "WARNING")
+            continue
+        result = subprocess.run(
+            ["git", "-c", "core.editor=true", "cherry-pick", "--continue"],
+            capture_output=True, text=True,
+        )
+        if result.returncode == 0:
+            return True
+        print_msg(result.stdout + result.stderr, "WARNING")
+
+
 def apply_missing_commits(config, missing, local_branch, base, hint=""):
     """Cherry-pick the missing commits on local_branch, which is created from base if needed.
     The repositories are left on local_branch.
@@ -214,9 +250,9 @@ def apply_missing_commits(config, missing, local_branch, base, hint=""):
                     f"\nConflict while cherry-picking {sha[:10]} {subject}\n"
                     f"in {repo} ({config[repo]['repo_path']}) on {local_branch}.", "FAIL"
                 )
-                # if sys.stdin.isatty() and wait_conflict_resolution(config[repo]["repo_path"]):
-                #     continue
-                # print_msg("Resolve it and run `git cherry-pick --continue`.", "FAIL")
+                if sys.stdin.isatty() and wait_conflict_resolution(config[repo]["repo_path"]):
+                    continue
+                print_msg("Resolve it and run `git cherry-pick --continue`.", "FAIL")
                 if plan[index + 1:]:
                     print_cherry_pick_plan(config, plan[index + 1:], local_branch, base, started_repos)
                 if hint:
