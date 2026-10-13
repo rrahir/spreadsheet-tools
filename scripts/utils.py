@@ -4,7 +4,7 @@ import re
 import subprocess
 import time
 from functools import partial
-from typing import list
+from typing import List
 
 from const import USER_HOME
 
@@ -134,7 +134,7 @@ def get_o_spreadsheet_js_hash(o_spredsheet_path) -> str:
     return commit_hash
 
 
-def retry_cmd(cmd_args: list[str], nbr_retry: int):
+def retry_cmd(cmd_args: List[str], nbr_retry: int):
     for i in range(1, nbr_retry + 1):
         try:
             result = subprocess.check_output(cmd_args)
