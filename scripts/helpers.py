@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 
 from const import DIFF_VALID_PATH
 from shared import get_verbose, get_version_info, spreadsheet_odoo_versions
@@ -132,6 +133,13 @@ def odoo_commit_title(rel_path, version="master"):
         version == "master" and "[IMP]" or "[FIX]", addon_name
     )
     return title
+
+
+def enterprise_adapt_title(version="master"):
+    # title of the enterprise PR applying the changes related to an o-spreadsheet update
+    return "{} *_spreadsheet_*: adapt to o-spreadsheet update".format(
+        version == "master" and "[IMP]" or "[FIX]"
+    )
 
 
 def enterprise_commit_title(spreadsheet_path, odoo_version="master"):
@@ -279,22 +287,47 @@ def convert_as(val):
     return val if len(parts) < 2 else "{}: {}".format(*tuple(reversed(parts)))
 
 
+def get_current_branch_pr_url():
+    result = subprocess.run(
+        ["gh", "pr", "view", "--json", "url"], capture_output=True, text=True
+    )
+    return json.loads(result.stdout)["url"] if result.returncode == 0 else None
+
+
 def make_PR(path, version, **kwargs) -> str:
     stop = kwargs.get("stop", True)
     # this can only be used with proper clearance
     autoCommit = kwargs.get("auto", False)
     rebase_method = kwargs.get("rebase_method", False)
-    
+    # PR title/body, defaults on the commits (gh --fill)
+    title = kwargs.get("title")
+    body = kwargs.get("body", "")
+    # number of attempts for each gh call
+    retry = kwargs.get("retry", 3)
+
     if rebase_method and rebase_method not in ["rebase-ff", "rebase-merge", "squash"]:
         raise Exception("Wrong rebase value")
     
     print("making PR", version, path)
     with pushd(path):
-        subprocess.check_output(
-            ["gh", "pr", "create", "--fill", "--base", version]
-        )
-        result = retry_cmd(["gh", "pr", "view", "--json", "url"], 3)
-        url = json.loads(result.decode("utf-8"))["url"]
+        content = ["--title", title, "--body", body] if title else ["--fill"]
+        url = None
+        for i in range(1, retry + 1):
+            try:
+                subprocess.check_output(
+                    ["gh", "pr", "create", *content, "--base", version]
+                )
+                break
+            except subprocess.CalledProcessError as e:
+                # github can fail (e.g. 502) after having created the PR
+                url = get_current_branch_pr_url()
+                if url:
+                    break
+                if i == retry:
+                    raise e
+                print(f"call #{i} failed. Retrying ...")
+                time.sleep(2)
+        url = url or json.loads(retry_cmd(["gh", "pr", "view", "--json", "url"], retry).decode("utf-8"))["url"]
 
         msg = []
         if stop:
@@ -306,7 +339,7 @@ def make_PR(path, version, **kwargs) -> str:
 
         if len(msg) > 0:
             retry_cmd(
-                ["gh", "pr", "comment", url, "--body", "\n".join(msg)], 3
+                ["gh", "pr", "comment", url, "--body", "\n".join(msg)], retry
             )
 
         return url
