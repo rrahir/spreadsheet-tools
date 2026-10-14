@@ -9,6 +9,7 @@ from helpers import (
     checkout,
     commit_message,
     copy_build,
+    enterprise_adapt_title,
     fetch_repositories,
     get_commits,
     get_odoo_prs,
@@ -111,8 +112,10 @@ def update(config: configparser.ConfigParser, versions: list[str]):
             git("commit", "--no-verify", "-am", message)
 
         # apply the odoo/enterprise changes related to the released o-spreadsheet PRs
-        pr_numbers = get_pr_numbers(config, odoo_hash, spreadsheet_hash)
-        missing = find_missing_commits(config, o_branch, version, pr_numbers)
+        missing = {}
+        if version == "master":
+            pr_numbers = get_pr_numbers(config, odoo_hash, spreadsheet_hash)
+            missing = find_missing_commits(config, o_branch, version, pr_numbers)
         if missing:
             print_missing_commits(missing, o_branch)
             remaining_versions = versions[versions.index(version) + 1:]
@@ -129,7 +132,11 @@ def update(config: configparser.ConfigParser, versions: list[str]):
             target_path = config[target_repo]["repo_path"]
             with pushd(target_path):
                 git("push", "-u", config[target_repo]["remote-dev"], o_branch)
-            url = make_PR(target_path, version, rebase_method="rebase-merge")
+            if target_repo == repo:
+                pr_title, pr_body = commit_title, body
+            else:
+                pr_title, pr_body = enterprise_adapt_title(version), ""
+            url = make_PR(target_path, version, rebase_method="rebase-merge", title=pr_title, body=pr_body)
             new_prs.append([f"{version} ({target_repo})", url])
 
     # print All PR's, split between new and old
