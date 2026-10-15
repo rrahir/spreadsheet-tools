@@ -1,15 +1,12 @@
-import subprocess
+import platform
 import re
 import sys
-import platform
+
+from helpers import git
 
 
 def check_git_version():
-    cmd = [
-        "git",
-        "--version",
-    ]
-    git_version_string = subprocess.check_output(cmd).decode("utf-8")
+    git_version_string = git("--version")
     git_version = re.findall("(\d+\.\d+(?:\.\d+)?)", git_version_string)[0]
     [major, minor, _] = git_version.split(".")
 

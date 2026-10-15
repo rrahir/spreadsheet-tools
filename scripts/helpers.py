@@ -1,71 +1,58 @@
-import subprocess
 import configparser
-import re
-import sys
-import os
-import shutil
-import pprint
 import json
+import os
 import pathlib
+import pprint
+import re
+import shutil
+import subprocess
+import sys
+import time
 
-from shared import spreadsheet_odoo_versions
 from const import DIFF_VALID_PATH
+from shared import get_verbose, get_version_info, spreadsheet_odoo_versions
 from utils import pushd, retry_cmd
-from shared import get_version_info, get_verbose
-
 
 pp = pprint.PrettyPrinter(depth=30)
+
+
+def git(*args) -> str:
+    return subprocess.check_output(["git", *args]).decode("utf-8").strip()
 
 
 def checkout(exec_path, branch, force=False):
     is_verbose = get_verbose()
     with pushd(exec_path):
         try:
-            lingering_diff = subprocess.check_output(["git", "diff"]).decode(
-                "utf-8"
-            )
+            lingering_diff = git("diff")
             if lingering_diff:
                 if force:
-                    subprocess.check_output(
-                        ["git", "reset", "--hard", "HEAD"]
-                    ).decode("utf-8")
+                    git("reset", "--hard", "HEAD")
                 else:
                     print_msg("You have unstaged changes. Please fix it", "FAIL")
                     print_msg(f"Path:\n{exec_path}\n\n{lingering_diff}\n")
                     print_msg("You have unstaged changes. Please fix it!", "FAIL")
                     sys.exit(1)
-            subprocess.check_output(["git", "checkout", branch])
+            git("checkout", branch)
         except subprocess.CalledProcessError as e:
             [_, version, _, _, _] = get_version_info(branch)
             is_verbose and print(
                 "Branch not found.\nCreating new local branch..."
             )
             is_verbose and print(f"Checkout base branch {version}")
-            subprocess.check_output(["git", "checkout", version])
+            git("checkout", version)
             # resets base on remote commit
             # TODORAR smarter fetch. checkout should work with config, not an exec path, imho
-            subprocess.check_output(["git", "pull"])
+            git("pull")
             is_verbose and print(f"Create branch {branch}")
-            subprocess.check_output(["git", "checkout", "-b", branch])
+            git("checkout", "-b", branch)
 
 
 def reset(exec_path, branch):
     with pushd(exec_path):
-        remote_branch = (
-            subprocess.check_output(
-                [
-                    "git",
-                    "rev-parse",
-                    "--abbrev-ref",
-                    "--symbolic-full-name",
-                    "@{u}",
-                ]
-            )
-            .decode("utf-8")
-            .rstrip("\n")
-        )
+        remote_branch = git("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
         get_verbose() and print(f"resetting {branch} on {remote_branch} ...")
-        subprocess.check_output(["git", "reset", "--hard", remote_branch])
+        git("reset", "--hard", remote_branch)
 
 
 def get_odoo_prs(config: configparser.ConfigParser):
@@ -73,7 +60,7 @@ def get_odoo_prs(config: configparser.ConfigParser):
     for repo in ["enterprise", "odoo"]:
         path = config[repo]["repo_path"]
         with pushd(path):
-            for version in spreadsheet_odoo_versions.keys():
+            for version in spreadsheet_odoo_versions:
                 existing_prs = subprocess.check_output(
                     [
                         "gh",
@@ -84,7 +71,7 @@ def get_odoo_prs(config: configparser.ConfigParser):
                     ]
                 ).decode("utf-8")
                 if existing_prs:
-                    url = "https://github.com/odoo/%s/pull/%s" % (
+                    url = "https://github.com/odoo/{}/pull/{}".format(
                         repo,
                         existing_prs.split("\t")[0],
                     )
@@ -96,7 +83,7 @@ def get_o_spreadsheet_release_prs(config: configparser.ConfigParser):
     prs = {}
     path = config["spreadsheet"]["repo_path"]
     with pushd(path):
-        for version in spreadsheet_odoo_versions.keys():
+        for version in spreadsheet_odoo_versions:
             existing_prs = subprocess.check_output(
                 [
                     "gh",
@@ -107,7 +94,7 @@ def get_o_spreadsheet_release_prs(config: configparser.ConfigParser):
                 ]
             ).decode("utf-8")
             if existing_prs:
-                url = "https://github.com/odoo/o-spreadsheet/pull/%s" % (
+                url = "https://github.com/odoo/o-spreadsheet/pull/{}".format(
                     existing_prs.split("\t")[0],
                 )
                 prs[version] = url
@@ -116,26 +103,18 @@ def get_o_spreadsheet_release_prs(config: configparser.ConfigParser):
 
 def get_commits(path, old, new):
     with pushd(path):
-        cmd = ["git", "diff", "--name-only", old, new]
-        diff_file_paths = (
-            subprocess.check_output(cmd).decode("utf-8").split("\n")
-        )
+        diff_file_paths = git("diff", "--name-only", old, new).split("\n")
         diff_files = any(
-            [
-                any([file_path.startswith(path) for path in DIFF_VALID_PATH])
+            any(file_path.startswith(path) for path in DIFF_VALID_PATH)
                 for file_path in diff_file_paths
-            ]
         )
         if not diff_files:
             return ""
-        cmd = [
-            "git",
+        commits = git(
             "log",
             f"{old}..{new}",
             "--pretty=format:https://github.com/odoo/o-spreadsheet/commit/%h %s [%(trailers:key=Task,separator=%20)](https://www.odoo.com/odoo/2328/tasks/%(trailers:key=Task,separator=%20,valueonly))",
-        ]
-
-        commits = subprocess.check_output(cmd).decode("utf-8")
+        )
         if not commits:
             return ""
         return f"### Contains the following commits:\n\n{commits}"
@@ -156,11 +135,17 @@ def odoo_commit_title(rel_path, version="master"):
     return title
 
 
+def enterprise_adapt_title(version="master"):
+    # title of the enterprise PR applying the changes related to an o-spreadsheet update
+    return "{} *_spreadsheet_*: adapt to o-spreadsheet update".format(
+        version == "master" and "[IMP]" or "[FIX]"
+    )
+
+
 def enterprise_commit_title(spreadsheet_path, odoo_version="master"):
     # returns a commit title based o nthe new o_spreadshet package version
-    with pushd(spreadsheet_path):
-        with open("package.json") as f:
-            package_version = json.load(f)["version"]
+    with pushd(spreadsheet_path), open("package.json") as f:
+        package_version = json.load(f)["version"]
 
     return "{} *_spreadsheet_*: Update o_spreadsheet library to version {}".format(
         odoo_version == "master" and "[IMP]" or "[FIX]", package_version
@@ -299,7 +284,14 @@ def convert_owl_imports(content):
 
 def convert_as(val):
     parts = val.split(" as ")
-    return val if len(parts) < 2 else "%s: %s" % tuple(reversed(parts))
+    return val if len(parts) < 2 else "{}: {}".format(*tuple(reversed(parts)))
+
+
+def get_current_branch_pr_url():
+    result = subprocess.run(
+        ["gh", "pr", "view", "--json", "url"], capture_output=True, text=True
+    )
+    return json.loads(result.stdout)["url"] if result.returncode == 0 else None
 
 
 def make_PR(path, version, **kwargs) -> str:
@@ -307,17 +299,35 @@ def make_PR(path, version, **kwargs) -> str:
     # this can only be used with proper clearance
     autoCommit = kwargs.get("auto", False)
     rebase_method = kwargs.get("rebase_method", False)
-    
+    # PR title/body, defaults on the commits (gh --fill)
+    title = kwargs.get("title")
+    body = kwargs.get("body", "")
+    # number of attempts for each gh call
+    retry = kwargs.get("retry", 3)
+
     if rebase_method and rebase_method not in ["rebase-ff", "rebase-merge", "squash"]:
         raise Exception("Wrong rebase value")
     
     print("making PR", version, path)
     with pushd(path):
-        subprocess.check_output(
-            ["gh", "pr", "create", "--fill", "--base", version]
-        )
-        result = retry_cmd(["gh", "pr", "view", "--json", "url"], 3)
-        url = json.loads(result.decode("utf-8"))["url"]
+        content = ["--title", title, "--body", body] if title else ["--fill"]
+        url = None
+        for i in range(1, retry + 1):
+            try:
+                subprocess.check_output(
+                    ["gh", "pr", "create", *content, "--base", version]
+                )
+                break
+            except subprocess.CalledProcessError as e:
+                # github can fail (e.g. 502) after having created the PR
+                url = get_current_branch_pr_url()
+                if url:
+                    break
+                if i == retry:
+                    raise e
+                print(f"call #{i} failed. Retrying ...")
+                time.sleep(2)
+        url = url or json.loads(retry_cmd(["gh", "pr", "view", "--json", "url"], retry).decode("utf-8"))["url"]
 
         msg = []
         if stop:
@@ -329,7 +339,7 @@ def make_PR(path, version, **kwargs) -> str:
 
         if len(msg) > 0:
             retry_cmd(
-                ["gh", "pr", "comment", url, "--body", "\n".join(msg)], 3
+                ["gh", "pr", "comment", url, "--body", "\n".join(msg)], retry
             )
 
         return url
@@ -340,26 +350,15 @@ def fetch_repositories(config, versions, spreadsheet_only=False):
 
     print("fetching o-spreadsheet ...")
     with pushd(spreadsheet_path):
-        subprocess.check_output(
-            [
-                "git",
-                "fetch",
-                config["spreadsheet"]["remote"],
-            ]
-            + versions
-        )
+        git("fetch", config["spreadsheet"]["remote"], *versions)
     if spreadsheet_only:
         return
     print("fetching enterprise ...")
     with pushd(config["enterprise"]["repo_path"]):
-        subprocess.check_output(
-            ["git", "fetch", config["enterprise"]["remote"]] + versions
-        )
+        git("fetch", config["enterprise"]["remote"], *versions)
     print("fetching odoo ...")
     with pushd(config["odoo"]["repo_path"]):
-        subprocess.check_output(
-            ["git", "fetch", config["odoo"]["remote"]] + versions
-        )
+        git("fetch", config["odoo"]["remote"], *versions)
 
 
 bcolors = {
@@ -390,25 +389,19 @@ def check_remote_alignment():
     root_dir = pathlib.Path(__file__).parent.parent
 
     with pushd(root_dir):
-        subprocess.check_output(["git", "remote", "update"])
+        git("remote", "update")
         ###
         # Check if the current branch was rebased on the remote master
         ###
 
-        remote_name = subprocess.check_output(
-            ["git", "remote",],
-            text=True,
-        ).strip().splitlines()[0]  # assuming 'origin' is the first remote
+        remote_name = git("remote").splitlines()[0]  # assuming 'origin' is the first remote
 
-        branch_name = subprocess.check_output(
-            [
-                "git", "branch",
-                "--contains",
-                remote_name, # remote master HEAD hash
-                "master"
-            ],
-            text=True
-        ).strip()
+        branch_name = git(
+            "branch",
+            "--contains",
+            remote_name, # remote master HEAD hash
+            "master"
+        )
         if (not branch_name):
             print_msg("Your local branch is not aligned with the remote branch master. Please pull the remote branch before continuing", "FAIL")
             exit(1)

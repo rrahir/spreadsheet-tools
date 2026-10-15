@@ -1,15 +1,16 @@
-import os
-import sys
 import configparser
+import os
 import subprocess
+import sys
+from shutil import which
+
 from const import CONFIG_FILE_PATH
 from utils import (
-    guess_enterprise_repo,
-    guess_spreadsheet_repo,
-    guess_odoo_repo,
     get_remote,
+    guess_enterprise_repo,
+    guess_odoo_repo,
+    guess_spreadsheet_repo,
 )
-from shutil import which
 
 CONFIG_KEYS = ["enterprise", "spreadsheet", "odoo"]
 
