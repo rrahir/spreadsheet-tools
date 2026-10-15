@@ -87,6 +87,8 @@ def update(config: configparser.ConfigParser, versions: list[str]):
                         """Defaulting on last [REL] commit...""", "WARNING"
                     )
                     spreadsheet_hash = git("log", "--pretty=format:%h", "-n", "1", "--grep", "\\[REL\\]")
+                    # build the release, not the commits merged after it
+                    git("checkout", "-q", spreadsheet_hash)
 
             # find all commits since last update
             odoo_hash = get_o_spreadsheet_js_hash(full_file_path)
