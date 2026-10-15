@@ -47,9 +47,7 @@ class TestSpreadsheetPerformance(HttpCase):
             spreadsheet_path = config["spreadsheet"]["repo_path"]
             helpers.checkout(spreadsheet_path, branch)
             helpers.run_build(config)
-            repo, _version, rel_path, lib_file_name, _stylesheet = shared.get_version_info("master")
-            repo_path = config[repo]["repo_path"]
-            full_path = str(Path(repo_path) / rel_path)
+            lib_file_name = shared.get_version_info("master").lib_file_name
             # Save build file in temp dir (use only filename)
             temp_dir = tempfile.mkdtemp(prefix=f"benchmark_{branch}_")
             build_filename = os.path.basename(lib_file_name)
@@ -81,9 +79,9 @@ class TestSpreadsheetPerformance(HttpCase):
             branch = branches[i % len(branches)]
             iteration = (i // len(branches)) + 1
             _logger.warning(f"[Progress] Branch: {branch}, Iteration: {iteration} / {runs_per_branch}")
-            repo, version, rel_path, lib_file_name, stylesheet = shared.get_version_info("master")
-            repo_path = config[repo]["repo_path"]
-            full_path = str(Path(repo_path) / rel_path)
+            version_info = shared.get_version_info("master")
+            repo_path = config[version_info.repo]["repo_path"]
+            full_path = str(Path(repo_path) / version_info.rel_path)
             # Copy prebuilt file to Odoo location
             shutil.copy2(build_files[branch], full_path)
 

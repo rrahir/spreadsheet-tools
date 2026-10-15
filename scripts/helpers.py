@@ -36,7 +36,7 @@ def checkout(exec_path, branch, force=False):
                     sys.exit(1)
             subprocess.check_output(["git", "checkout", branch])
         except subprocess.CalledProcessError as e:
-            [_, version, _, _, _] = get_version_info(branch)
+            version = get_version_info(branch).version
             is_verbose and print(
                 "Branch not found.\nCreating new local branch..."
             )
@@ -200,7 +200,7 @@ def run_build(config: configparser.ConfigParser):
             exit(1)
 
 
-def copy_build(config: configparser.ConfigParser, lib_file_name: str, destination_path: str, stylesheet: str = "NO"):
+def copy_build(config: configparser.ConfigParser, lib_file_name: str, destination_path: str, stylesheet: str = "NO", copy_types: bool = False):
     if stylesheet not in ["NO", "SCSS", "CSS"]:
         print_msg("Wrong stylesheet option", "FAIL")
         exit(1)
@@ -213,6 +213,10 @@ def copy_build(config: configparser.ConfigParser, lib_file_name: str, destinatio
             files.append("o_spreadsheet.scss")
         if (stylesheet == "CSS"):
             files.append("o_spreadsheet.css")
+        if copy_types:
+            if not os.path.isfile("o_spreadsheet.d.ts"):
+                print_msg("Types file o_spreadsheet.d.ts not found in the build", "WARNING")
+            files.append("o_spreadsheet.d.ts")
         for file in files:
             if os.path.isfile(file):
                 shutil.copy(file, destination_path)

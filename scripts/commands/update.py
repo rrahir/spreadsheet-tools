@@ -40,7 +40,10 @@ def update(config: configparser.ConfigParser, versions: list[str]):
     h = str(uuid4())[:4]
 
     for version in versions:
-        [repo, version, rel_path, lib_file_name, stylesheet] = spreadsheet_odoo_versions[version]
+        version_info = spreadsheet_odoo_versions[version]
+        version = version_info.version
+        repo = version_info.repo
+        rel_path = version_info.rel_path
         text = f"Processing version {version}"
         print(text)
         print("=" * len(text))
@@ -112,7 +115,7 @@ def update(config: configparser.ConfigParser, versions: list[str]):
             checkout(repo_path, o_branch)
             # build & cp build
             run_build(config)
-            copy_build(config, lib_file_name, full_path, stylesheet)
+            copy_build(config, version_info.lib_file_name, full_path, version_info.stylesheet, version_info.copy_types)
             # commit
             subprocess.check_output(["git", "commit", "--no-verify", "-am", message])
             cmd = [
