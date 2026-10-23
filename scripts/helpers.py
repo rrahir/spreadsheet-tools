@@ -403,5 +403,5 @@ def check_remote_alignment():
             "master"
         )
         if (not branch_name):
-            print_msg("Your local branch is not aligned with the remote branch master. Please pull the remote branch before continuing", "FAIL")
+            print_msg("Your spreadsheet-tools branch is not up to date with the remote branch master. Please pull the remote branch before continuing", "FAIL")
             exit(1)
