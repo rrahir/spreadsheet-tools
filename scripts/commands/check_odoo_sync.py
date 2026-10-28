@@ -297,6 +297,7 @@ def check_odoo_sync(config: configparser.ConfigParser, apply=False):
 
 def warn_odoo_sync(config: configparser.ConfigParser):
     """Non-blocking check, used by the build and push commands"""
+    print("\n=== Checking ODOO SYNC ===\n")
     local_branch, base = get_branch_info(config)
     if base != "master":
         return
