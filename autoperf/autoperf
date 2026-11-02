@@ -1,0 +1,305 @@
+#!/usr/bin/env node
+/**
+ * autoperf — autonomous performance researcher driver.
+ *
+ *   ./autoperf init <tag>            Create branch autoperf/<tag>
+ *   ./autoperf commit "msg"          Stage all changes in o-spreadsheet, commit, print SHA.
+ *   ./autoperf bench [--runs N]      Build HEAD, benchmark vs parent bundle, print Global verdict.
+ *   ./autoperf profile [--ref R] [--runs N]
+ *                                    CPU profile: run the scenario, print a ranked self-time table.
+ *   ./autoperf profile-memory [--ref R] [--runs N]
+ *                                    Allocation profile (heap sampling): print a ranked
+ *                                    self-allocation table (load-independent: bytes, not time).
+ *   ./autoperf keep [note...]        Amend HEAD's commit message with the last bench measures.
+ *   ./autoperf discard               Drop HEAD
+ *   ./autoperf jest [args...]        Run jest in the o-spreadsheet repo (passes args through).
+ */
+
+import { execSync, spawnSync, fork } from "child_process";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+import { runBenchmark, buildAndCacheBundle } from "../benchmark/index.js";
+import { analyze, printReport } from "../benchmark/report.js";
+import { parseArgs } from "../benchmark/parseArgs.js";
+import {
+    aggregateCpu,
+    aggregateMemory,
+    printTable,
+    formatMs,
+    formatMb,
+} from "../benchmark/profile_report.js";
+import { getOdooSpreadsheetRepoPath, resolveSha as shortSha } from "../benchmark/repo.js";
+
+const AUTOPERF_DIR = path.dirname(fileURLToPath(import.meta.url));
+const SPDIR = getOdooSpreadsheetRepoPath();
+const SCENARIO_PATH = path.join(AUTOPERF_DIR, "scenario.js");
+const LOGS_DIR = path.join(AUTOPERF_DIR, "logs");
+const RESULTS_TSV = path.join(AUTOPERF_DIR, "results.tsv");
+const LAST_BENCH = path.join(AUTOPERF_DIR, ".last_bench");
+const PROFILE_WORKER = path.resolve(AUTOPERF_DIR, "../benchmark/profile_worker.js");
+const DEFAULT_RUNS = 10;
+const DEFAULT_PROFILE_RUNS = 5;
+const DEFAULT_MEMORY_RUNS = 2;
+
+function sh(cmd, opts = {}) {
+    return execSync(cmd, { cwd: SPDIR, ...opts });
+}
+function shTrim(cmd) {
+    return sh(cmd, { stdio: ["ignore", "pipe", "inherit"] }).toString().trim();
+}
+// Run git with array args (no shell). Use this whenever an argument may contain
+// newlines or shell metacharacters (e.g. a commit message): passing it as a real
+// argv element preserves newlines, instead of the shell turning a JSON-escaped
+// "\n" into the two literal characters backslash-n.
+function git(argv) {
+    const r = spawnSync("git", argv, { cwd: SPDIR, stdio: ["ignore", "inherit", "inherit"] });
+    if (r.status !== 0) {
+        throw new Error(`git ${argv[0]} exited with status ${r.status}`);
+    }
+    return r;
+}
+
+// ---------- subcommands ----------
+
+function cmdInit(args) {
+    const tag = args.positional[0];
+    if (!tag) {
+        console.error("usage: autoperf init <tag>"); process.exit(2);
+    }
+    const branch = `autoperf/${tag}`;
+
+    try {
+        sh(`git show-ref --verify --quiet refs/heads/${branch}`);
+    } catch { /* doesn't exist — good */
+        try { sh("git diff-index --quiet HEAD --"); }
+        catch { console.error(`ERROR: working tree dirty in ${SPDIR}. Commit or stash first.`); process.exit(1); }
+
+        sh(`git checkout -b ${branch}`, { stdio: "inherit" });
+        fs.mkdirSync(LOGS_DIR, { recursive: true });
+
+        if (!fs.existsSync(RESULTS_TSV)) {
+            fs.writeFileSync(RESULTS_TSV, "commit\tglobal_ms\tstderr_ms\tspeedup_pct\tstatus\tdescription\n");
+        }
+        console.log(
+`\nRun initialized.
+  branch:        ${branch}
+  o-spreadsheet: ${SPDIR}
+  autoperf:      ${AUTOPERF_DIR}
+
+Next: edit files under ${SPDIR}/src/, then ./autoperf commit "msg", then ./autoperf bench.`);
+        return;
+    }
+    console.error(`ERROR: branch ${branch} already exists. Pick a fresh tag.`);
+    process.exit(1);
+}
+
+function cmdCommit(args) {
+    const msg = args.positional.join(" ").trim();
+    if (!msg) { console.error('usage: autoperf commit "<message>"'); process.exit(2); }
+    sh("git add -A");
+    try { sh("git diff --cached --quiet"); }
+    catch {
+        git(["commit", "--quiet", "-m", msg]);
+        console.log(shortSha());
+        return;
+    }
+    console.error("ERROR: nothing to commit.");
+    process.exit(1);
+}
+
+async function cmdBench(args) {
+    const runs = args.runs ? parseInt(args.runs, 10) : DEFAULT_RUNS;
+    if (!Number.isInteger(runs) || runs < 1) {
+        console.error("ERROR: --runs must be a positive integer");
+        process.exit(2);
+    }
+
+    const parentSha = shortSha("HEAD~1");
+
+    fs.mkdirSync(LOGS_DIR, { recursive: true });
+    const headSha = shortSha("HEAD");
+
+    const ts = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
+    const logPath = path.join(LOGS_DIR, `${ts}_${headSha}.log`);
+    const logStream = fs.createWriteStream(logPath);
+    const logLine = (s) => logStream.write(s + "\n");
+
+    let samples;
+    try {
+        samples = await runBenchmark({
+            targets: [
+                { label: "parent",    ref: "HEAD~1" },
+                { label: "candidate", ref: "HEAD"   },
+            ],
+            runsPerTarget: runs,
+            scenarioPath: SCENARIO_PATH,
+            buildOut: logStream,
+            onProgress: ({ label, run, total }) => logLine(`Running ${label}, run ${run}/${total}`),
+        });
+    } catch (err) {
+        logLine(err);
+        logLine(`BENCH FAILED: ${err.message}`);
+        logStream.end();
+        console.error(err);
+        console.error(`BENCH FAILED: ${err.message}`);
+        console.log(`crash: reason=worker_error commit=${headSha} log=${logPath}`);
+        process.exit(1);
+    }
+
+    // Write the full pretty report to the log for sub-event inspection.
+    printReport(samples, { color: false, out: logLine });
+    logStream.end();
+
+    const hasGlobal = analyze(samples).some((e) => e.event === "Global");
+    if (!hasGlobal) {
+        console.error("PARSE FAILED: no Global stats in samples");
+        console.log(`crash: reason=no_global commit=${headSha} log=${logPath}`);
+        process.exit(3);
+    }
+
+    console.log(`commit=${headSha} parent=${parentSha}`);
+    printReport(samples, {
+        color: false,
+        eventFilter: (e) => e.event === "Global" || (e.verdict && e.verdict.label === "faster"),
+    });
+    console.log(`log=${logPath}`);
+
+    fs.writeFileSync(LAST_BENCH, JSON.stringify({ sha: headSha, log: logPath }) + "\n");
+}
+
+function timestamp() {
+    return new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
+}
+
+// Fork the profile worker, wait for it to write the profile, return the path.
+function runProfileWorker({ bundlePath, mode, outPath, runs, execArgv = [] }) {
+    return new Promise((resolve, reject) => {
+        const child = fork(PROFILE_WORKER, [], {
+            execArgv,
+            env: {
+                ...process.env,
+                BENCHMARK_ENGINE_PATH: bundlePath,
+                BENCHMARK_SCENARIO: SCENARIO_PATH,
+                BENCHMARK_LABEL: mode,
+                PROFILE_MODE: mode,
+                PROFILE_OUT: outPath,
+                PROFILE_RUNS: String(runs),
+            },
+            stdio: "inherit",
+        });
+        child.on("error", reject);
+        child.on("exit", (code) => {
+            if (code !== 0) reject(new Error(`profile worker exited with code ${code}`));
+            else resolve(outPath);
+        });
+    });
+}
+
+async function cmdProfile(args) {
+    const runs = args.runs ? parseInt(args.runs, 10) : DEFAULT_PROFILE_RUNS;
+    if (!Number.isInteger(runs) || runs < 1) {
+        console.error("ERROR: --runs must be a positive integer"); process.exit(2);
+    }
+    const ref = args.ref || "HEAD";
+
+    fs.mkdirSync(LOGS_DIR, { recursive: true });
+    const { sha, bundlePath } = buildAndCacheBundle({ ref, out: process.stdout });
+    const outPath = path.join(LOGS_DIR, `${timestamp()}_${sha}.cpuprofile`);
+
+    await runProfileWorker({ bundlePath, mode: "cpu", outPath, runs });
+
+    const profile = JSON.parse(fs.readFileSync(outPath, "utf8"));
+    const { totals, total } = aggregateCpu(profile);
+    printTable({
+        totals,
+        total,
+        format: formatMs,
+        header: `total CPU self-time: ${formatMs(total)} (${runs} runs)`,
+    });
+    console.log(`profile=${outPath}`);
+}
+
+async function cmdProfileMemory(args) {
+    const runs = args.runs ? parseInt(args.runs, 10) : DEFAULT_MEMORY_RUNS;
+    if (!Number.isInteger(runs) || runs < 1) {
+        console.error("ERROR: --runs must be a positive integer"); process.exit(2);
+    }
+    const ref = args.ref || "HEAD";
+
+    fs.mkdirSync(LOGS_DIR, { recursive: true });
+    const { sha, bundlePath } = buildAndCacheBundle({ ref, out: process.stdout });
+    const outPath = path.join(LOGS_DIR, `${timestamp()}_${sha}.heapprofile`);
+
+    await runProfileWorker({
+        bundlePath, mode: "memory", outPath, runs, execArgv: ["--expose-gc"],
+    });
+
+    const profile = JSON.parse(fs.readFileSync(outPath, "utf8"));
+    const { totals, total } = aggregateMemory(profile);
+    printTable({
+        totals,
+        total,
+        format: formatMb,
+        header: `total allocated (sampled): ${formatMb(total)} (${runs} runs, load-independent)`,
+    });
+    console.log(`profile=${outPath}`);
+}
+
+function cmdKeep(args) {
+    const { sha, log } = JSON.parse(fs.readFileSync(LAST_BENCH, "utf8"));
+    const headSha = shortSha("HEAD");
+    if (sha !== headSha) {
+        console.error(`ERROR: last bench was for ${sha}, but HEAD is ${headSha}. Re-run ./autoperf bench.`);
+        process.exit(1);
+    }
+    // Extract per-event blocks: event-name line + parent/candidate/verdict lines.
+    const measures = execSync(
+        `grep -B1 -A2 --no-group-separator '^  parent:' ${JSON.stringify(log)}`,
+    ).toString().trim();
+    if (!measures) {
+        console.error(`ERROR: could not extract measures from ${log}`);
+        process.exit(1);
+    }
+
+    const note = args.positional.join(" ").trim();
+    const currentMsg = shTrim("git log -1 --pretty=%B");
+    const parts = [currentMsg];
+    if (note) {
+        parts.push("", note);
+    }
+    parts.push("", measures);
+    git(["commit", "--amend", "--quiet", "-m", parts.join("\n")]);
+    console.log(shortSha());
+}
+
+function cmdDiscard() {
+    const headSha = shortSha("HEAD");
+    sh("git reset --hard --quiet HEAD~1");
+    console.log(`discarded ${headSha}; HEAD now ${shortSha("HEAD")}`);
+}
+
+function cmdJest(argv) {
+    const r = spawnSync("npx", ["jest", ...argv], { cwd: SPDIR, stdio: "inherit" });
+    process.exit(r.status ?? 1);
+}
+
+// ---------- dispatch ----------
+
+const [, , sub, ...rest] = process.argv;
+const args = parseArgs(rest);
+
+switch (sub) {
+    case "init":    cmdInit(args); break;
+    case "commit":  cmdCommit(args); break;
+    case "bench":   await cmdBench(args); break;
+    case "profile":        await cmdProfile(args); break;
+    case "profile-memory": await cmdProfileMemory(args); break;
+    case "keep":    cmdKeep(args); break;
+    case "discard": cmdDiscard(); break;
+    case "jest":    cmdJest(rest); break;
+    default:
+        console.error("usage: autoperf <init|commit|bench|profile|profile-memory|keep|discard|jest> [args...]");
+        process.exit(2);
+}
