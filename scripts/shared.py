@@ -19,7 +19,6 @@ def get_verbose() -> bool:
 # { branch prefix (stable release): [version, filepath in enterprise]}
 # TODO: find another way to get the version to ordinate them
 spreadsheet_odoo_versions = {
-    "17.0": ["odoo", "17.0", "addons/spreadsheet/static/src/o_spreadsheet/", "o-spreadsheet.iife.js", "NO"],
     "18.0": ["odoo", "18.0", "addons/spreadsheet/static/src/o_spreadsheet/", "o-spreadsheet.esm.js", "NO"],
     "19.0": ["odoo", "19.0", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js", "SCSS"],
     "saas-19.1": ["odoo", "saas-19.1", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js", "CSS"],
@@ -76,6 +75,7 @@ def get_version_info(branch: str) -> "tuple[str, str]":
     #     "documents_spreadsheet/static/src/js/o_spreadsheet/",
     #     "o_spreadsheet.js",
     # ],
+    # "17.0": ["odoo", "17.0", "addons/spreadsheet/static/src/o_spreadsheet/", "o-spreadsheet.iife.js", "NO"],
     # "saas-17.2": ["odoo", "saas-17.2", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.js", False],
     # "saas-17.4": ["odoo", "saas-17.4", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.js", False],
     # "saas-18.1": ["odoo", "saas-18.1", "addons/spreadsheet/static/src/o_spreadsheet/", "o_spreadsheet.esm.js", False],
