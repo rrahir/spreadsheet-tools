@@ -58,7 +58,7 @@ def guess_odoo_repo() -> str:
     try:
         cmd = ["find", USER_HOME, "-type", "f", "-iname", "odoo-bin"]
         result = subprocess.check_output(cmd).decode("utf-8").split("\n")[:-1]
-        result = [re.sub("\/odoo-bin$", "", r) for r in result]
+        result = [re.sub(r"\/odoo-bin$", "", r) for r in result]
     except Exception:
         result = []
 
@@ -85,7 +85,7 @@ def guess_enterprise_repo() -> str:
             "documents_spreadsheet",
         ]
         result = subprocess.check_output(cmd).decode("utf-8").split("\n")[:-1]
-        result = [re.sub("\/documents_spreadsheet$", "", r) for r in result]
+        result = [re.sub(r"\/documents_spreadsheet$", "", r) for r in result]
     except Exception:
         result = []
 

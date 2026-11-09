@@ -7,7 +7,7 @@ from helpers import git
 
 def check_git_version():
     git_version_string = git("--version")
-    git_version = re.findall("(\d+\.\d+(?:\.\d+)?)", git_version_string)[0]
+    git_version = re.findall(r"(\d+\.\d+(?:\.\d+)?)", git_version_string)[0]
     [major, minor, _] = git_version.split(".")
 
     if (int(major) * 10000 + int(minor)) < 20022:
